@@ -1,0 +1,10 @@
+---
+globs: *.ts,*.tsx
+---
+# TypeScript Standards for mcp-5etools
+
+- Enable strict mode (see [tsconfig.json](mdc:tsconfig.json)).
+- Avoid `any` in public types; use precise interfaces and generics.
+- Favor small, composable functions with explicit return types for public APIs.
+- Prefer pure utilities in `src/` for rendering logic and tag handling.
+- Match existing project formatting; avoid refactors that only change formatting.
