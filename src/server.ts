@@ -27,6 +27,7 @@ type RecordLite = {
 const ROOT = process.env.FIVETOOLS_SRC_DIR
   ?? path.join(process.cwd(), "5etools-src");
 const DATA = path.join(ROOT, "data");
+const HOMEBREW = path.join(ROOT, "homebrew");
 
 const idx = {
   byKind: new Map<Kind, RecordLite[]>(),
@@ -56,6 +57,51 @@ function addSourceMeta(abbreviation: string, full?: string, kind?: Kind) {
       kinds: new Set(kind ? [kind] : []),
     });
   }
+}
+
+/** Map from Kind to JSON key in data files */
+const kindToKey: Record<Kind, string> = {
+  monster: "monster",
+  spell: "spell",
+  item: "item",
+  feat: "feat",
+  background: "background",
+  race: "race",
+  class: "class",
+  subclass: "subclass",
+  condition: "condition",
+  rule: "rule",
+  adventure: "adventure",
+  book: "book",
+};
+
+/** Process entities of a given kind from a JSON file and add to index */
+function processEntities(json: any, kind: Kind, metaSources: any[]): RecordLite[] {
+  const key = kindToKey[kind];
+  const arr = key && json[key] ? (json[key] as any[]) : [];
+  const records: RecordLite[] = [];
+
+  for (const e of arr) {
+    const name: string = e.name ?? e.title ?? "";
+    if (!name) continue;
+    const source: string = (e.source ?? metaSources?.[0]?.abbreviation) ?? "UNK";
+    const uri = entityUri(kind, source, name);
+    const ruleset = rulesetFromSource(source);
+
+    const facets: Record<string, any> = {};
+    if (kind === "monster") { facets.cr = e.cr; facets.type = e.type?.type ?? e.type; }
+    if (kind === "spell") { facets.level = e.level; facets.school = e.school; }
+    if (kind === "item") { facets.rarity = e.rarity; facets.reqAttune = !!e.reqAttune; }
+
+    const aliases: string[] = Array.isArray(e.alias) ? e.alias
+      : (e.alias ? [e.alias] : (Array.isArray(e.aliases) ? e.aliases : []));
+
+    records.push({ uri, name, slug: toSlug(name), source, ruleset, facets, aliases, kind });
+    idx.byUri.set(uri, { ...e, _uri: uri, _source: source, _ruleset: ruleset, _kind: kind });
+    addSourceMeta(source, undefined, kind);
+  }
+
+  return records;
 }
 
 async function loadAll() {
@@ -97,42 +143,64 @@ async function loadAll() {
         addSourceMeta(abbr, fullName, kind);
       }
 
-      const key =
-        kind === "monster" ? "monster" :
-        kind === "spell" ? "spell" :
-        kind === "item" ? "item" :
-        kind === "feat" ? "feat" :
-        kind === "background" ? "background" :
-        kind === "race" ? "race" :
-        kind === "class" ? "class" :
-        kind === "subclass" ? "subclass" :
-        kind === "condition" ? "condition" :
-        kind === "rule" ? "rule" :
-        kind === "adventure" ? "adventure" :
-        kind === "book" ? "book" : undefined;
-
-      const arr = key && json[key] ? (json[key] as any[]) : [];
-      for (const e of arr) {
-        const name: string = e.name ?? e.title ?? "";
-        if (!name) continue;
-        const source: string = (e.source ?? metaSources?.[0]?.abbreviation) ?? "UNK";
-        const uri = entityUri(kind as Kind, source, name);
-        const ruleset = rulesetFromSource(source);
-
-        const facets: Record<string, any> = {};
-        if (kind === "monster") { facets.cr = e.cr; facets.type = e.type?.type ?? e.type; }
-        if (kind === "spell") { facets.level = e.level; facets.school = e.school; }
-        if (kind === "item") { facets.rarity = e.rarity; facets.reqAttune = !!e.reqAttune; }
-
-        const aliases: string[] = Array.isArray(e.alias) ? e.alias
-          : (e.alias ? [e.alias] : (Array.isArray(e.aliases) ? e.aliases : []));
-
-        records.push({ uri, name, slug: toSlug(name), source, ruleset, facets, aliases, kind });
-        idx.byUri.set(uri, { ...e, _uri: uri, _source: source, _ruleset: ruleset, _kind: kind });
-        addSourceMeta(source, undefined, kind);
-      }
+      records.push(...processEntities(json, kind, metaSources));
     }
     idx.byKind.set(kind as Kind, records);
+  }
+}
+
+/** Supported kinds for homebrew indexing */
+const homebrewKinds: Kind[] = [
+  "monster", "spell", "item", "feat", "background",
+  "race", "class", "subclass", "condition"
+];
+
+async function loadHomebrew() {
+  const indexPath = path.join(HOMEBREW, "index.json");
+  let indexJson: { toImport?: string[] };
+  try {
+    const raw = await fs.readFile(indexPath, "utf8");
+    indexJson = JSON.parse(raw);
+  } catch {
+    // No homebrew index or unreadable - skip silently
+    return;
+  }
+
+  const toImport = indexJson.toImport ?? [];
+  if (toImport.length === 0) return;
+
+  for (const relPath of toImport) {
+    const fullPath = path.join(HOMEBREW, relPath);
+    let json: any;
+    try {
+      const raw = await fs.readFile(fullPath, "utf8");
+      json = JSON.parse(raw);
+    } catch {
+      // Skip files that can't be read
+      continue;
+    }
+
+    // harvest _meta.sources
+    const metaSources: any[] = json?._meta?.sources ?? [];
+    for (const s of metaSources) {
+      const abbr: string = s.abbreviation || s.abbrev || s.source || s.json || s.id || "UNK";
+      const fullName: string | undefined = s.full || s.name || s.title;
+      // Add source meta for all homebrew kinds it might contain
+      for (const kind of homebrewKinds) {
+        if (json[kindToKey[kind]]) {
+          addSourceMeta(abbr, fullName, kind);
+        }
+      }
+    }
+
+    // Process each supported kind from this homebrew file
+    for (const kind of homebrewKinds) {
+      const records = processEntities(json, kind, metaSources);
+      if (records.length > 0) {
+        const existing = idx.byKind.get(kind) ?? [];
+        idx.byKind.set(kind, [...existing, ...records]);
+      }
+    }
   }
 }
 
@@ -229,6 +297,7 @@ function findEntity(kind: Kind, name: string, source?: string, prefer: Exclude<R
 
 async function main() {
   await loadAll();
+  await loadHomebrew();
 
   const server = new McpServer({ name: "mcp-5etools", version: "0.2.0" });
 
