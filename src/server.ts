@@ -298,7 +298,7 @@ async function main() {
       if (!e) return { content: [{ type: "text", text: "Not found." }] };
 
       if (format === "json") {
-        return { content: [{ type: "json", json: e }] } as any;
+        return { content: [{ type: "text", text: JSON.stringify(e, null, 2) }] } as any;
       }
       const body = renderEntries(e.entries ?? e.entry ?? e.text ?? "");
       const text = `# ${e.name}\n\n${body}`;
@@ -330,7 +330,7 @@ async function main() {
       const items = Array.from(idx.sourcesMeta.values())
         .filter(s => (ruleset === "any" || s.ruleset === ruleset) && (!kind || s.kinds.has(kind as Kind)))
         .map(s => ({ abbreviation: s.abbreviation, full: s.full, ruleset: s.ruleset, kinds: Array.from(s.kinds) }));
-      return { content: [{ type: "json", json: items }] } as any;
+      return { content: [{ type: "text", text: JSON.stringify(items, null, 2) }] } as any;
     }
   );
 
