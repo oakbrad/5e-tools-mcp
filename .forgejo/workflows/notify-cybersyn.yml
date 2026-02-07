@@ -1,0 +1,19 @@
+# Notify Cybersyn to rebuild when 5e-tools-mcp changes
+name: Notify Cybersyn
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  dispatch:
+    runs-on: docker
+    container:
+      image: node:20-bookworm
+    steps:
+      - name: Trigger Cybersyn deploy
+        uses: https://git.michaelsasser.org/actions/workflow-dispatch@main
+        with:
+          repository: commune/cybersyn
+          workflowname: deploy.yml
+          token: ${{ secrets.DISPATCH_TOKEN }}
