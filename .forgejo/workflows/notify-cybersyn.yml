@@ -15,5 +15,5 @@ jobs:
         uses: https://git.michaelsasser.org/actions/workflow-dispatch@main
         with:
           repository: commune/cybersyn
-          workflowname: deploy.yml
+          workflowname: deploy-mcp.yml
           token: ${{ secrets.DISPATCH_TOKEN }}
