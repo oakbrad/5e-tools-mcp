@@ -66,7 +66,10 @@ FIVETOOLS_SRC_DIR=./5etools-src npm start
 ## MCP Surfaces (Tools & Resources)
 
 **Tools**
-- `search_entities({ query, kinds?, sources?, ruleset?, limit? })` (now fuzzy-ranked)
+- `search_entities({ query, kinds?, sources?, ruleset?, limit? })` — generic fuzzy search across all entity types
+- `search_spells({ name?, level?, school?, classes?, source?, ruleset?, limit? })` — domain-specific spell search
+- `search_monsters({ name?, cr_min?, cr_max?, type?, source?, ruleset?, limit? })` — domain-specific monster search
+- `search_items({ name?, rarity?, type?, attunement?, source?, ruleset?, limit? })` — domain-specific item search
 - `get_entity({ uri? | key:{kind,name,source?,ruleset?}, format?, includeFluff? })`
 - `render_entries({ entries, format? })`
 - `list_sources({ ruleset?, kind? })`
@@ -77,6 +80,59 @@ FIVETOOLS_SRC_DIR=./5etools-src npm start
 - `fiveet://entity/{kind}/{source}/{slug}` → entity JSON
 
 Minimal tag rendering supports common tags (`{@spell}`, `{@item}`, `{@condition}`, `{@dice}`, `{@damage}`, `{@dc}`, `{@hit}`) and can be extended.
+
+### Domain-Specific Search Examples
+
+**Search for 3rd-level evocation spells:**
+```json
+{
+  "tool": "search_spells",
+  "parameters": {
+    "level": 3,
+    "school": "E"
+  }
+}
+```
+
+**Search for wizards spells named "fireball":**
+```json
+{
+  "tool": "search_spells",
+  "parameters": {
+    "name": "fireball",
+    "classes": ["wizard"]
+  }
+}
+```
+
+**Search for CR 5-10 dragons:**
+```json
+{
+  "tool": "search_monsters",
+  "parameters": {
+    "cr_min": 5,
+    "cr_max": 10,
+    "type": "dragon"
+  }
+}
+```
+
+**Search for legendary items that require attunement:**
+```json
+{
+  "tool": "search_items",
+  "parameters": {
+    "rarity": "legendary",
+    "attunement": true
+  }
+}
+```
+
+**Notes:**
+- `school` uses abbreviated codes: A (abjuration), C (conjuration), D (divination), E (evocation), I (illusion), N (necromancy), T (transmutation), V (enchantment)
+- `cr_min`/`cr_max` accept fractional values (e.g., 0.125 for CR 1/8, 0.25 for CR 1/4)
+- All domain-specific tools support `ruleset` filtering ("2014", "2024", or "any")
+- Use `search_entities` for cross-domain or exploratory searches
 
 ---
 
