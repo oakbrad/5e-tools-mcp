@@ -1,6 +1,8 @@
 // src/encounter.ts
 // Encounter building logic based on DMG 2014 Chapter 13
 
+import { searchMonsters, type SearchIndex } from "./search.js";
+
 /** XP Thresholds by Character Level (DMG p.82) */
 const XP_THRESHOLDS: Record<number, { easy: number; medium: number; hard: number; deadly: number }> = {
   1: { easy: 25, medium: 50, hard: 75, deadly: 100 },
@@ -263,6 +265,8 @@ export function suggestEncounters(
     crMin?: number;
     crMax?: number;
     availableCRs?: string[];
+    searchIndex?: SearchIndex;
+    ruleset?: "2014" | "2024" | "any";
   } = {}
 ): EncounterSuggestion[] {
   const partyThresholds = calculatePartyThresholds(party);
@@ -368,5 +372,51 @@ export function suggestEncounters(
   const targetMid = (targetRange.min + targetRange.max) / 2;
   unique.sort((a, b) => Math.abs(a.adjustedXP - targetMid) - Math.abs(b.adjustedXP - targetMid));
   
-  return unique.slice(0, 10);
+  const topSuggestions = unique.slice(0, 10);
+  
+  // Populate monster names if search index provided
+  if (options.searchIndex) {
+    const ruleset = options.ruleset ?? "any";
+    
+    for (const suggestion of topSuggestions) {
+      for (const monster of suggestion.monsters) {
+        // Convert CR string to numeric for search (e.g., "1/4" → 0.25)
+        const crNumeric = parseCRToNumber(monster.cr);
+        
+        // Search for monsters at this exact CR
+        const candidates = searchMonsters(options.searchIndex, {
+          cr_min: crNumeric,
+          cr_max: crNumeric,
+          ruleset,
+          limit: 5
+        });
+        
+        // Pick a random monster from the top results, or list first 3
+        if (candidates.length > 0) {
+          if (candidates.length === 1) {
+            monster.name = candidates[0].name;
+          } else if (candidates.length <= 3) {
+            monster.name = candidates.map(c => c.name).join(" / ");
+          } else {
+            // Show first 3 options
+            monster.name = candidates.slice(0, 3).map(c => c.name).join(" / ") + "...";
+          }
+        }
+      }
+    }
+  }
+  
+  return topSuggestions;
+}
+
+/**
+ * Helper to convert CR string to numeric value
+ */
+function parseCRToNumber(cr: string): number {
+  if (cr === "0") return 0;
+  if (cr.includes("/")) {
+    const [num, denom] = cr.split("/").map(Number);
+    return num / denom;
+  }
+  return parseFloat(cr);
 }

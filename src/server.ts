@@ -655,7 +655,7 @@ ${monsterSummary}
     "suggest_encounter",
     {
       title: "Suggest encounter compositions",
-      description: "Generate encounter suggestions for a desired difficulty. Returns 5-10 balanced encounter options.",
+      description: "Generate encounter suggestions for a desired difficulty. Returns 5-10 balanced encounter options with actual monster names.",
       inputSchema: {
         party: z.array(z.number().int().min(1).max(20))
           .describe("Array of character levels"),
@@ -667,14 +667,18 @@ ${monsterSummary}
           .describe("Minimum CR to consider"),
         cr_max: z.number().optional()
           .describe("Maximum CR to consider"),
+        ruleset: z.enum(["2014","2024","any"]).optional()
+          .describe("Ruleset to use for monster selection (default: any)"),
       }
     },
-    async ({ party, difficulty, monster_count, cr_min, cr_max }) => {
+    async ({ party, difficulty, monster_count, cr_min, cr_max, ruleset = "any" }) => {
       try {
         const suggestions = suggestEncounters(party, difficulty, {
           monsterCount: monster_count,
           crMin: cr_min,
           crMax: cr_max,
+          searchIndex: idx,
+          ruleset,
         });
 
         if (suggestions.length === 0) {
@@ -691,7 +695,10 @@ ${monsterSummary}
 
         suggestions.forEach((suggestion, i) => {
           const monsterDesc = suggestion.monsters
-            .map(m => `${m.count}× CR ${m.cr}`)
+            .map(m => {
+              const crPart = `${m.count}× CR ${m.cr}`;
+              return m.name ? `${crPart} (${m.name})` : crPart;
+            })
             .join(" + ");
           
           lines.push(`**${i + 1}.** ${monsterDesc}`);
