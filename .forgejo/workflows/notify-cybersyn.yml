@@ -1,20 +1,23 @@
-# Notify Cybersyn to rebuild when 5e-tools-mcp changes
+# Notify Cybersyn infrastructure that 5e-tools-mcp updates are available
+# This runs AFTER branch protection ensures tests have passed on main
 name: Notify Cybersyn
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  dispatch:
+  notify:
     runs-on: docker
     container:
       image: node:20-bookworm
+    
     steps:
-      - name: Trigger Cybersyn deploy
+      - name: Trigger Cybersyn MCP deployment
         uses: https://git.michaelsasser.org/actions/workflow-dispatch@main
         with:
           repository: commune/cybersyn
-          workflowname: deploy.yml
+          workflowname: deploy-mcp.yaml
           token: ${{ secrets.DISPATCH_TOKEN }}

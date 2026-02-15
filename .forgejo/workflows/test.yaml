@@ -2,11 +2,7 @@ name: Test
 
 on:
   push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
 
 jobs:
   test:
@@ -25,18 +21,9 @@ jobs:
           cache: 'npm'
       
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       
       - name: Run tests
         run: npm test
         env:
           CI: true
-      
-      - name: Trigger Cybersyn notification
-        # Only trigger on main branch, not PRs
-        if: success() && github.ref == 'refs/heads/main'
-        uses: https://git.michaelsasser.org/actions/workflow-dispatch@main
-        with:
-          repository: dungeonchurch/5e-tools-mcp
-          workflowname: notify-cybersyn.yml
-          token: ${{ secrets.DISPATCH_TOKEN }}
