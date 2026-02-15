@@ -6,6 +6,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { renderEntries } from "./renderer.js";
 import { toSlug } from "./utils.js";
+import { searchSpells, searchMonsters, searchItems } from "./search.js";
 
 type Ruleset = "2014" | "2024" | "any";
 type Kind =
@@ -335,6 +336,87 @@ async function main() {
         content: [
           { type: "text", text: `Found ${scored.length} result(s).` },
           ...scored.map(makeResourceLink)
+        ] as any
+      } as any;
+    }
+  );
+
+  server.registerTool(
+    "search_spells",
+    {
+      title: "Search spells",
+      description: "Search for D&D spells with domain-specific filters like level, school, and classes.",
+      inputSchema: {
+        name: z.string().optional(),
+        level: z.number().int().min(0).max(9).optional(),
+        school: z.enum(["A","C","D","E","I","N","T","V"]).optional(),
+        classes: z.array(z.string()).optional(),
+        source: z.string().optional(),
+        ruleset: z.enum(["2014","2024","any"]).optional(),
+        limit: z.number().int().positive().max(50).optional(),
+      }
+    },
+    async ({ name, level, school, classes, source, ruleset = "any", limit = 10 }) => {
+      const candidates = searchSpells(idx, { name, level, school, classes, source, ruleset, limit });
+
+      return {
+        content: [
+          { type: "text", text: `Found ${candidates.length} spell(s).` },
+          ...candidates.map(makeResourceLink)
+        ] as any
+      } as any;
+    }
+  );
+
+  server.registerTool(
+    "search_monsters",
+    {
+      title: "Search monsters",
+      description: "Search for D&D monsters/creatures with domain-specific filters like CR and type.",
+      inputSchema: {
+        name: z.string().optional(),
+        cr_min: z.number().optional(),
+        cr_max: z.number().optional(),
+        type: z.string().optional(),
+        source: z.string().optional(),
+        ruleset: z.enum(["2014","2024","any"]).optional(),
+        limit: z.number().int().positive().max(50).optional(),
+      }
+    },
+    async ({ name, cr_min, cr_max, type, source, ruleset = "any", limit = 10 }) => {
+      const candidates = searchMonsters(idx, { name, cr_min, cr_max, type, source, ruleset, limit });
+
+      return {
+        content: [
+          { type: "text", text: `Found ${candidates.length} monster(s).` },
+          ...candidates.map(makeResourceLink)
+        ] as any
+      } as any;
+    }
+  );
+
+  server.registerTool(
+    "search_items",
+    {
+      title: "Search items",
+      description: "Search for D&D items with domain-specific filters like rarity, type, and attunement.",
+      inputSchema: {
+        name: z.string().optional(),
+        rarity: z.enum(["none","common","uncommon","rare","very rare","legendary","artifact","unknown","unknown (magic)","varies"]).optional(),
+        type: z.string().optional(),
+        attunement: z.boolean().optional(),
+        source: z.string().optional(),
+        ruleset: z.enum(["2014","2024","any"]).optional(),
+        limit: z.number().int().positive().max(50).optional(),
+      }
+    },
+    async ({ name, rarity, type, attunement, source, ruleset = "any", limit = 10 }) => {
+      const candidates = searchItems(idx, { name, rarity, type, attunement, source, ruleset, limit });
+
+      return {
+        content: [
+          { type: "text", text: `Found ${candidates.length} item(s).` },
+          ...candidates.map(makeResourceLink)
         ] as any
       } as any;
     }
