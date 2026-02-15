@@ -13,6 +13,13 @@ import {
   suggestEncounters,
   type MonsterEntry,
 } from "./encounter.js";
+import { generateTreasure } from "./treasure.js";
+import { scaleEncounter } from "./scale-encounter.js";
+import { generateRandomEncounter, type Environment, type Difficulty } from "./random-encounter.js";
+import {
+  suggestMagicItems,
+  type MagicItemSuggestion,
+} from "./magic-items.js";
 
 type Ruleset = "2014" | "2024" | "any";
 type Kind =
@@ -700,9 +707,314 @@ ${monsterSummary}
               return m.name ? `${crPart} (${m.name})` : crPart;
             })
             .join(" + ");
-          
+
           lines.push(`**${i + 1}.** ${monsterDesc}`);
           lines.push(`   Base XP: ${suggestion.totalBaseXP} | Adjusted: ${suggestion.adjustedXP} | Difficulty: ${suggestion.difficulty}\n`);
+        });
+
+        return {
+          content: [
+            { type: "text", text: lines.join("\n") },
+            { type: "text", text: JSON.stringify(suggestions, null, 2) }
+          ]
+        } as any;
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }]
+        } as any;
+      }
+    }
+  );
+
+  server.registerTool(
+    "scale_encounter",
+    {
+      title: "Scale encounter difficulty",
+      description: "Adjust an existing encounter to match a new difficulty or party composition. Preserves the encounter's feel by scaling monster counts and CRs proportionally.",
+      inputSchema: {
+        current_encounter: z.array(z.object({
+          cr: z.union([z.number(), z.string()])
+            .describe("Challenge Rating (supports '1/8', '1/4', '1/2', or decimal/integer)"),
+          count: z.number().int().positive()
+            .describe("Number of monsters of this CR"),
+        })).describe("Current monsters in the encounter"),
+        current_party: z.array(z.number().int().min(1).max(20))
+          .describe("Original party levels"),
+        target_party: z.array(z.number().int().min(1).max(20)).optional()
+          .describe("New party levels (if party composition changed)"),
+        target_difficulty: z.enum(["easy", "medium", "hard", "deadly"]).optional()
+          .describe("Desired difficulty (alternative to adjustment)"),
+        adjustment: z.enum(["easier", "harder"]).optional()
+          .describe("Relative adjustment: 'easier' or 'harder' (alternative to target_difficulty)"),
+      }
+    },
+    async ({ current_encounter, current_party, target_party, target_difficulty, adjustment }) => {
+      try {
+        const result = scaleEncounter({
+          current_encounter,
+          current_party,
+          target_party,
+          target_difficulty,
+          adjustment,
+        });
+
+        const originalMonsters = result.original.monsters
+          .map(m => `  • ${m.count}× CR ${m.cr} (${m.xp} XP each)`)
+          .join("\n");
+
+        const scaledMonsters = result.scaled.monsters
+          .map(m => `  • ${m.count}× CR ${m.cr} (${m.xp} XP each)`)
+          .join("\n");
+
+        const text = `**Encounter Scaling**
+
+**Original Encounter:**
+• Party: ${current_party.length} characters at levels ${current_party.join(", ")}
+• Monsters:
+${originalMonsters}
+• Base XP: ${result.original.totalBaseXP}
+• Adjusted XP: ${result.original.adjustedXP}
+• Difficulty: **${result.original.difficulty}**
+
+**Scaled Encounter:**
+• Party: ${target_party?.length ?? current_party.length} characters at levels ${(target_party ?? current_party).join(", ")}
+• Monsters:
+${scaledMonsters}
+• Base XP: ${result.scaled.totalBaseXP}
+• Adjusted XP: ${result.scaled.adjustedXP}
+• Difficulty: **${result.scaled.difficulty}**
+
+**Scaling Rationale:**
+${result.rationale.map(r => `• ${r}`).join("\n")}
+
+**Strategy Used:** ${result.strategy.replace(/_/g, " ")}`;
+
+        return {
+          content: [
+            { type: "text", text },
+            { type: "text", text: JSON.stringify(result, null, 2) }
+          ]
+        } as any;
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }]
+        } as any;
+      }
+    }
+  );
+
+  server.registerTool(
+    "generate_treasure",
+    {
+      title: "Generate treasure/loot",
+      description: "Generate treasure/loot by CR or hoard tier following DMG treasure tables.",
+      inputSchema: {
+        challenge_rating: z.number().optional()
+          .describe("Challenge Rating of the encounter (0-30). Used for individual treasure."),
+        hoard_tier: z.enum(["tier1", "tier2", "tier3", "tier4"]).optional()
+          .describe("Treasure hoard tier (alternative to CR). Tier 1: levels 1-4, Tier 2: levels 5-10, Tier 3: levels 11-16, Tier 4: levels 17-20."),
+        magic_item_preference: z.enum(["none", "few", "many"]).optional()
+          .describe("Adjust magic item frequency. Default: 'few'."),
+      }
+    },
+    async ({ challenge_rating, hoard_tier, magic_item_preference = "few" }) => {
+      try {
+        const treasure = generateTreasure({
+          challenge_rating,
+          hoard_tier,
+          magic_item_preference,
+        });
+
+        const lines = [`**${treasure.hoardType === 'individual' ? 'Individual' : 'Hoard'} Treasure**\n`];
+
+        if (treasure.cr !== undefined) {
+          lines.push(`Challenge Rating: ${treasure.cr}`);
+        }
+        if (treasure.tier) {
+          lines.push(`Tier: ${treasure.tier}`);
+        }
+
+        lines.push("\n**Coins:**");
+        const coins = treasure.coins;
+        if (coins.cp > 0) lines.push(`  • ${coins.cp} copper`);
+        if (coins.sp > 0) lines.push(`  • ${coins.sp} silver`);
+        if (coins.ep > 0) lines.push(`  • ${coins.ep} electrum`);
+        if (coins.gp > 0) lines.push(`  • ${coins.gp} gold`);
+        if (coins.pp > 0) lines.push(`  • ${coins.pp} platinum`);
+
+        if (treasure.gems.length > 0) {
+          lines.push("\n**Gems:**");
+          treasure.gems.forEach(gem => {
+            lines.push(`  • ${gem.description}`);
+          });
+        }
+
+        if (treasure.art.length > 0) {
+          lines.push("\n**Art Objects:**");
+          treasure.art.forEach(art => {
+            lines.push(`  • ${art.description}`);
+          });
+        }
+
+        if (treasure.magicItems.length > 0) {
+          lines.push("\n**Magic Items:**");
+          treasure.magicItems.forEach(item => {
+            lines.push(`  • ${item.description} (${item.rarity})`);
+          });
+        }
+
+        lines.push(`\n**Total Value:** ${treasure.totalValueGP.toFixed(2)} gp`);
+
+        return {
+          content: [
+            { type: "text", text: lines.join("\n") },
+            { type: "text", text: JSON.stringify(treasure, null, 2) }
+          ]
+        } as any;
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }]
+        } as any;
+      }
+    }
+  );
+
+  server.registerTool(
+    "random_encounter",
+    {
+      title: "Generate random encounter",
+      description: "Generate a thematic random encounter based on environment and party level. Returns a complete encounter with monsters, XP values, difficulty rating, and flavor text.",
+      inputSchema: {
+        environment: z.enum(["forest", "underdark", "mountain", "desert", "urban", "coast", "arctic", "swamp", "grassland"])
+          .describe("Terrain/environment type for the encounter"),
+        party: z.array(z.number().int().min(1).max(20))
+          .describe("Array of character levels (e.g., [3, 3, 3, 2])"),
+        difficulty: z.enum(["easy", "medium", "hard", "deadly"])
+          .describe("Desired encounter difficulty"),
+        monster_count: z.number().int().positive().optional()
+          .describe("Preferred number of monsters (default: 1 per 4 PCs)"),
+        ruleset: z.enum(["2014","2024","any"]).optional()
+          .describe("Ruleset to use for monster selection (default: any)"),
+      }
+    },
+    async ({ environment, party, difficulty, monster_count, ruleset = "any" }) => {
+      try {
+        const encounter = generateRandomEncounter(party, environment, difficulty, idx, {
+          ruleset,
+          monsterCount: monster_count,
+        });
+
+        const monsterDesc = encounter.monsters
+          .map(m => `${m.count}× ${m.name} (CR ${m.cr})`)
+          .join("\n  ");
+
+        const lines = [
+          `**Random Encounter: ${environment.charAt(0).toUpperCase() + environment.slice(1)}**`,
+          ``,
+          encounter.flavorText,
+          ``,
+          `**Party:** ${party.length} characters at levels ${party.join(", ")}`,
+          ``,
+          `**Monsters:**`,
+          `  ${monsterDesc}`,
+          ``,
+          `**XP Calculation:**`,
+          `• Base XP: ${encounter.totalBaseXP}`,
+          `• Multiplier: ×${encounter.encounterMultiplier}`,
+          `• Adjusted XP: ${encounter.adjustedXP}`,
+          ``,
+          `**Difficulty:** **${encounter.difficultyRating}**`,
+          ``,
+          `**Party Thresholds:**`,
+          `• Easy: ${encounter.partyThresholds.easy} XP`,
+          `• Medium: ${encounter.partyThresholds.medium} XP`,
+          `• Hard: ${encounter.partyThresholds.hard} XP`,
+          `• Deadly: ${encounter.partyThresholds.deadly} XP`,
+        ];
+
+        return {
+          content: [
+            { type: "text", text: lines.join("\n") },
+            { type: "text", text: JSON.stringify(encounter, null, 2) }
+          ]
+        } as any;
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }]
+        } as any;
+      }
+    }
+  );
+
+  server.registerTool(
+    "suggest_magic_items",
+    {
+      title: "Suggest magic items",
+      description: "Suggest appropriate magic items for a given party tier/level, with options to filter by type and rarity.",
+      inputSchema: {
+        party_level: z.number().int().min(1).max(20).optional()
+          .describe("Average party level (1-20). Alternative to tier parameter."),
+        tier: z.enum(["tier1", "tier2", "tier3", "tier4"]).optional()
+          .describe("Party tier (tier1=1-4, tier2=5-10, tier3=11-16, tier4=17-20). Alternative to party_level."),
+        item_type: z.string().optional()
+          .describe("Filter by item type (e.g., weapon, armor, wondrous, potion, scroll, ring, rod, staff, wand)"),
+        rarity: z.enum(["common", "uncommon", "rare", "very rare", "legendary", "artifact"]).optional()
+          .describe("Filter by rarity. If not specified, uses tier-appropriate rarities."),
+        count: z.number().int().positive().max(50).optional()
+          .describe("How many items to suggest (default: 5, max: 50)"),
+        source: z.string().optional()
+          .describe("Filter by source abbreviation (e.g., PHB, DMG, XPHB)"),
+        ruleset: z.enum(["2014", "2024", "any"]).optional()
+          .describe("Ruleset to use for item selection (default: any)"),
+      }
+    },
+    async ({ party_level, tier, item_type, rarity, count = 5, source, ruleset = "any" }) => {
+      try {
+        const suggestions = suggestMagicItems(idx, {
+          party_level,
+          tier,
+          item_type,
+          rarity,
+          count,
+          source,
+          ruleset,
+        });
+
+        if (suggestions.length === 0) {
+          return {
+            content: [{
+              type: "text",
+              text: `No suitable magic items found for the given criteria. Try adjusting rarity, type, or source filters.`
+            }]
+          } as any;
+        }
+
+        // Build tier description
+        let tierDesc: string;
+        if (party_level) {
+          tierDesc = `Party level ${party_level} (${levelToTier(party_level)})`;
+        } else if (tier) {
+          const levelRange = tier === "tier1" ? "1-4" :
+                            tier === "tier2" ? "5-10" :
+                            tier === "tier3" ? "11-16" : "17-20";
+          tierDesc = `${tier.toUpperCase()} (levels ${levelRange})`;
+        } else {
+          tierDesc = "Default tier (5-10)";
+        }
+
+        const lines = [`**Magic Item Suggestions for ${tierDesc}**\n`];
+
+        if (item_type) lines.push(`Type: ${item_type}\n`);
+        if (rarity) lines.push(`Rarity: ${rarity}\n`);
+        lines.push(`Ruleset: ${ruleset === "any" ? "Any" : ruleset}\n`);
+
+        suggestions.forEach((item, i) => {
+          lines.push(`**${i + 1}. ${item.name}**`);
+          lines.push(`   Rarity: ${item.rarity} | Type: ${item.type} | Source: ${item.source}`);
+          if (item.description) {
+            lines.push(`   ${item.description}...`);
+          }
+          lines.push("");
         });
 
         return {
@@ -730,6 +1042,14 @@ ${monsterSummary}
       return { contents: [{ uri: uri.href, text: JSON.stringify(e, null, 2) }] };
     }
   );
+
+  /** Helper function to map level to tier */
+  function levelToTier(level: number): "tier1" | "tier2" | "tier3" | "tier4" {
+    if (level >= 1 && level <= 4) return "tier1";
+    if (level >= 5 && level <= 10) return "tier2";
+    if (level >= 11 && level <= 16) return "tier3";
+    return "tier4";
+  }
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
