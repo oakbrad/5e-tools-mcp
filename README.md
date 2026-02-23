@@ -39,11 +39,8 @@ FIVETOOLS_SRC_DIR=/path/to/data npm start
 ### Docker
 
 ```bash
-# Build the image (requires npm run build first)
-npm run build
+# Build and run (TypeScript compiles inside the container)
 docker build -t mcp-5etools .
-
-# Run with auto-bootstrap (data cloned on first start)
 docker run -p 3524:3524 -v 5etools-data:/data mcp-5etools
 
 # Or with docker-compose

@@ -1,0 +1,18 @@
+{
+  "trap": [
+    {
+      "name": "Pit Trap",
+      "source": "DMG",
+      "trapHazType": "MECH",
+      "entries": ["A simple pit trap is a hole dug in the ground."]
+    }
+  ],
+  "hazard": [
+    {
+      "name": "Brown Mold",
+      "source": "DMG",
+      "trapHazType": "ENV",
+      "entries": ["Brown mold feeds on warmth, drawing heat from anything around it."]
+    }
+  ]
+}

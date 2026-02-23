@@ -1,0 +1,32 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "PHB", "full": "Player's Handbook" }]
+  },
+  "race": [
+    {
+      "name": "Elf",
+      "source": "PHB",
+      "speed": 30,
+      "size": ["M"],
+      "entries": ["Elves are a magical people of otherworldly grace."]
+    },
+    {
+      "name": "Dwarf",
+      "source": "PHB",
+      "speed": 25,
+      "size": ["M"],
+      "entries": ["Bold and hardy, dwarves are known as skilled warriors."]
+    }
+  ],
+  "subrace": [
+    {
+      "name": "High Elf",
+      "source": "PHB",
+      "raceName": "Elf",
+      "raceSource": "PHB",
+      "entries": [
+        "As a high elf, you have a keen mind and a mastery of at least the basics of magic."
+      ]
+    }
+  ]
+}

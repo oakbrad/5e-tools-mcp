@@ -1,0 +1,100 @@
+{
+  "_meta": {
+    "sources": [
+      {
+        "json": "DungeonChurchNPCs",
+        "abbreviation": "CHURCH",
+        "full": "Dungeon Church; Pyora NPCs",
+        "version": "1.0",
+        "url": "https://www.dungeon.church",
+        "authors": ["DM Brad"],
+        "convertedBy": ["DM Brad"],
+        "color": "ff2600"
+      },
+      {
+        "json": "DungeonChurch",
+        "abbreviation": "CHURCH",
+        "full": "Dungeon Church's Pyora",
+        "version": "1.0",
+        "url": "https://www.dungeon.church",
+        "authors": ["DM Brad"],
+        "convertedBy": ["DM Brad"],
+        "color": "ff2600"
+      }
+    ]
+  },
+  "monster": [
+    {
+      "name": "Mildred Magpie",
+      "source": "DungeonChurchNPCs",
+      "size": ["M"],
+      "type": "fey",
+      "alignment": ["N", "E"],
+      "ac": [{ "ac": 20, "from": ["natural armor"] }],
+      "hp": { "average": 114, "formula": "12d8 + 60" },
+      "speed": { "walk": 30 },
+      "str": 20,
+      "dex": 18,
+      "con": 20,
+      "int": 13,
+      "wis": 14,
+      "cha": 16,
+      "cr": "6",
+      "senses": ["darkvision 60 ft."],
+      "passive": 15,
+      "languages": ["Common", "Draconic", "Sylvan", "Thieves' cant"]
+    }
+  ],
+  "condition": [
+    {
+      "name": "Intoxicated",
+      "source": "DungeonChurch",
+      "page": 420,
+      "entries": [
+        "An intoxicated creature has disadvantage on attack rolls and ability checks. To cast a spell, the creature must first succeed a DC 10 Constitution check. Otherwise, the spellcasting action is wasted, but the spell is not."
+      ]
+    }
+  ],
+  "language": [
+    {
+      "name": "Adalindian Whistling",
+      "source": "DungeonChurch",
+      "entries": ["A secret, whistled language used by the Gnomish resistance movement."],
+      "type": "secret",
+      "typicalSpeakers": ["gnomes"]
+    }
+  ],
+  "race": [
+    {
+      "name": "Elfmarked",
+      "source": "DungeonChurch",
+      "size": ["M"],
+      "speed": 30,
+      "darkvision": 60,
+      "entries": [
+        {
+          "name": "Elven Ancestry",
+          "entries": [
+            "You have advantage on saving throws against being charmed, and magic can't put you to sleep."
+          ],
+          "type": "entries"
+        }
+      ]
+    }
+  ],
+  "deity": [
+    {
+      "name": "Abraxas",
+      "title": "God of War",
+      "source": "DungeonChurch",
+      "pantheon": "Pyora",
+      "alignment": ["L", "N"],
+      "altNames": ["Dragon Slayer", "Cock of Striborg"],
+      "domains": ["War", "Oaths", "Masculinity"],
+      "symbol": "Rooster whipping a dragon, Scale encircled by Whip",
+      "entries": [
+        "God of war and martial classes, patron of the Iron Riders of Abraxas, slayer of dragons."
+      ]
+    }
+  ]
+}

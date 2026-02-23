@@ -1,0 +1,9 @@
+{
+  "data": [
+    {
+      "type": "section",
+      "name": "Rules",
+      "entries": ["These are the basic rules of the game."]
+    }
+  ]
+}

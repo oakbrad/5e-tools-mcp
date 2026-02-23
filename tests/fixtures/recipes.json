@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "HF", "full": "Heroes' Feast" }]
+  },
+  "recipe": [
+    {
+      "name": "Elven Bread",
+      "source": "HF",
+      "type": "Snack",
+      "entries": ["A thin, crisp wafer that sustains travelers on long journeys."]
+    }
+  ]
+}

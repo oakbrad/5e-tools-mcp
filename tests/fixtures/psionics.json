@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "UAMystic", "full": "Unearthed Arcana: The Mystic Class" }]
+  },
+  "psionic": [
+    {
+      "name": "Psychic Focus",
+      "source": "UAMystic",
+      "type": "T",
+      "entries": ["You can focus psionic energy on one of your psionic disciplines."]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "PHB", "full": "Player's Handbook" }]
+  },
+  "language": [
+    {
+      "name": "Common",
+      "source": "PHB",
+      "type": "standard",
+      "script": "Common",
+      "entries": ["Common is spoken by most humanoids."]
+    },
+    {
+      "name": "Elvish",
+      "source": "PHB",
+      "type": "standard",
+      "script": "Elvish",
+      "entries": ["Elvish is fluid, with subtle intonations and intricate grammar."]
+    }
+  ],
+  "languageScript": [
+    {
+      "name": "Dwarvish Script",
+      "source": "PHB",
+      "entries": ["An angular, runic script used by dwarves."]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "PHB", "full": "Player's Handbook" }]
+  },
+  "deity": [
+    {
+      "name": "Tyr",
+      "source": "PHB",
+      "pantheon": "Faerunian",
+      "alignment": ["L", "G"],
+      "title": "God of Justice",
+      "domains": ["War"]
+    },
+    {
+      "name": "Oghma",
+      "source": "PHB",
+      "pantheon": "Faerunian",
+      "alignment": ["N"],
+      "title": "God of Knowledge",
+      "domains": ["Knowledge"]
+    }
+  ]
+}

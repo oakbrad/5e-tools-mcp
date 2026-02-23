@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "DMG", "full": "Dungeon Master's Guide" }]
+  },
+  "object": [
+    {
+      "name": "Ballista",
+      "source": "DMG",
+      "type": "siege weapon",
+      "ac": 15,
+      "hp": 50,
+      "entries": ["A ballista is a massive crossbow that fires heavy bolts."]
+    }
+  ]
+}

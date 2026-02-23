@@ -2,11 +2,10 @@ node_modules/
 5etools-src/
 .git/
 tests/
-src/
+dist/
 *.md
 .prettierrc
 .prettierignore
 eslint.config.js
-tsconfig.json
 .forgejo/
 .claude/

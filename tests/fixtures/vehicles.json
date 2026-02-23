@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "GoS", "full": "Ghosts of Saltmarsh" }]
+  },
+  "vehicle": [
+    {
+      "name": "Galley",
+      "source": "GoS",
+      "vehicleType": "SHIP",
+      "speed": 4,
+      "entries": ["A galley is a large sailing vessel."]
+    }
+  ],
+  "vehicleUpgrade": [
+    {
+      "name": "Reinforced Hull",
+      "source": "GoS",
+      "entries": ["The ship's hull is reinforced with iron plates."]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "encounter": [
+    {
+      "name": "Forest",
+      "source": "XGE",
+      "tables": [
+        {
+          "minlvl": 1,
+          "maxlvl": 4,
+          "diceExpression": "d100",
+          "table": [
+            { "min": 1, "max": 50, "result": "1 {@creature Goblin|MM}" },
+            { "min": 51, "max": 100, "result": "1 {@creature Owlbear|MM}" }
+          ]
+        }
+      ]
+    }
+  ]
+}

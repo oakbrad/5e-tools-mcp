@@ -1,0 +1,40 @@
+{
+  "_meta": {
+    "sources": [
+      { "abbreviation": "PHB", "full": "Player's Handbook" },
+      { "abbreviation": "DMG", "full": "Dungeon Master's Guide" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Longsword",
+      "source": "PHB",
+      "rarity": "none",
+      "type": "M",
+      "weight": 3,
+      "weaponCategory": "martial",
+      "dmg1": "1d8",
+      "dmgType": "S",
+      "property": ["V"],
+      "reqAttune": false
+    },
+    {
+      "name": "Potion of Healing",
+      "source": "DMG",
+      "rarity": "common",
+      "type": "P",
+      "weight": 0.5,
+      "reqAttune": false,
+      "entries": ["You regain {@dice 2d4 + 2} hit points when you drink this potion."]
+    }
+  ],
+  "itemGroup": [
+    {
+      "name": "Spell Scroll",
+      "source": "DMG",
+      "rarity": "varies",
+      "type": "SC",
+      "entries": ["A spell scroll bears the words of a single spell."]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "monsterFluff": [
+    {
+      "name": "Goblin",
+      "source": "MM",
+      "entries": ["Goblins are small, black-hearted humanoids that lair in despoiled dungeons."]
+    }
+  ]
+}

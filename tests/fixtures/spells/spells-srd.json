@@ -1,0 +1,61 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "PHB", "full": "Player's Handbook" }]
+  },
+  "spell": [
+    {
+      "name": "Magic Missile",
+      "source": "PHB",
+      "level": 1,
+      "school": "V",
+      "time": [{ "number": 1, "unit": "action" }],
+      "range": { "type": "point", "distance": { "type": "feet", "amount": 120 } },
+      "components": { "v": true, "s": true },
+      "duration": [{ "type": "instant" }],
+      "entries": ["You create three glowing darts of magical force."],
+      "classes": {
+        "fromClassList": [
+          { "name": "Sorcerer", "source": "PHB" },
+          { "name": "Wizard", "source": "PHB" }
+        ]
+      }
+    },
+    {
+      "name": "Fireball",
+      "source": "PHB",
+      "level": 3,
+      "school": "E",
+      "time": [{ "number": 1, "unit": "action" }],
+      "range": { "type": "point", "distance": { "type": "feet", "amount": 150 } },
+      "components": { "v": true, "s": true, "m": "a tiny ball of bat guano and sulfur" },
+      "duration": [{ "type": "instant" }],
+      "entries": ["A bright streak flashes from your pointing finger to a point you choose."],
+      "classes": {
+        "fromClassList": [
+          { "name": "Sorcerer", "source": "PHB" },
+          { "name": "Wizard", "source": "PHB" }
+        ]
+      }
+    },
+    {
+      "name": "Cure Wounds",
+      "source": "PHB",
+      "level": 1,
+      "school": "V",
+      "time": [{ "number": 1, "unit": "action" }],
+      "range": { "type": "point", "distance": { "type": "touch" } },
+      "components": { "v": true, "s": true },
+      "duration": [{ "type": "instant" }],
+      "entries": [
+        "A creature you touch regains hit points equal to {@dice 1d8} + your spellcasting ability modifier."
+      ],
+      "classes": {
+        "fromClassList": [
+          { "name": "Bard", "source": "PHB" },
+          { "name": "Cleric", "source": "PHB" },
+          { "name": "Druid", "source": "PHB" }
+        ]
+      }
+    }
+  ]
+}

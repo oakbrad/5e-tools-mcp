@@ -1,0 +1,18 @@
+{
+  "adventure": [
+    {
+      "name": "SRD Test Adventure",
+      "id": "SRD-ADV",
+      "source": "SRD-ADV",
+      "author": "SRD Authors",
+      "group": "supplement",
+      "storyline": "Test Campaign",
+      "level": { "start": 1, "end": 5 },
+      "published": "2024-01-01",
+      "contents": [
+        { "name": "Introduction", "headers": ["Background", "Overview"] },
+        { "name": "The Dungeon", "ordinal": { "type": "part", "identifier": 1 } }
+      ]
+    }
+  ]
+}

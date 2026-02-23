@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "PHB", "full": "Player's Handbook" }]
+  },
+  "optionalfeature": [
+    {
+      "name": "Agonizing Blast",
+      "source": "PHB",
+      "featureType": ["EI"],
+      "entries": [
+        "When you cast {@spell eldritch blast}, add your Charisma modifier to the damage."
+      ]
+    },
+    {
+      "name": "Repelling Blast",
+      "source": "PHB",
+      "featureType": ["EI"],
+      "entries": [
+        "When you hit a creature with {@spell eldritch blast}, you can push the creature."
+      ]
+    }
+  ]
+}

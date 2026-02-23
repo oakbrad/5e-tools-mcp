@@ -1,0 +1,24 @@
+{
+  "condition": [
+    { "name": "Blinded", "source": "PHB", "entries": ["A blinded creature can't see."] },
+    {
+      "name": "Charmed",
+      "source": "PHB",
+      "entries": ["A charmed creature can't attack the charmer."]
+    }
+  ],
+  "disease": [
+    {
+      "name": "Sewer Plague",
+      "source": "DMG",
+      "entries": ["Sewer plague is a generic term for a broad category of illnesses."]
+    }
+  ],
+  "status": [
+    {
+      "name": "Concentration",
+      "source": "PHB",
+      "entries": ["Some spells require you to maintain concentration."]
+    }
+  ]
+}

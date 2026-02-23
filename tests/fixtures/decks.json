@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "DMG", "full": "Dungeon Master's Guide" }]
+  },
+  "deck": [
+    {
+      "name": "Deck of Many Things",
+      "source": "DMG",
+      "entries": ["Usually found in a box or pouch, this deck contains a number of cards."]
+    }
+  ],
+  "card": [
+    {
+      "name": "The Fool",
+      "source": "DMG",
+      "set": "Deck of Many Things",
+      "entries": ["You lose 10,000 XP, discard this card, and draw from the deck again."]
+    }
+  ]
+}

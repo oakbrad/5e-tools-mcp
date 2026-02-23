@@ -1,0 +1,13 @@
+{
+  "book": [
+    {
+      "name": "SRD Test Handbook",
+      "id": "SRD-BK",
+      "source": "SRD-BK",
+      "author": "SRD Authors",
+      "group": "core",
+      "published": "2024-06-01",
+      "contents": [{ "name": "Rules", "ordinal": { "type": "chapter", "identifier": 1 } }]
+    }
+  ]
+}

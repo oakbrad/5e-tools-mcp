@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
+import { existsSync } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -951,77 +952,51 @@ describe("loadAll indexed kinds (adventure/book)", () => {
   });
 });
 
-// ── Live data smoke test ─────────────────────────────────────────
-// Runs loadAll against the real 5etools data directory to verify
-// every kind actually loads. Doesn't pin to exact counts since
-// upstream data changes — just asserts each kind has ≥1 entity.
+// ── SRD fixture test — comprehensive loading against committed fixtures ──
+// Runs in CI and locally. Uses SRD / CC-licensed data in tests/fixtures/.
 
-describe("loadAll against live data", () => {
-  const ROOT = process.env.FIVETOOLS_SRC_DIR ?? path.join(process.cwd(), "5etools-src");
-  const DATA = path.join(ROOT, "data");
+const FIXTURES_DIR = path.resolve(import.meta.dirname ?? __dirname, "fixtures");
 
+describe("loadAll against SRD fixtures", () => {
   let idx: AppIndex;
   let tableStore: Map<string, RollableTable>;
-  let loaded: boolean;
 
   beforeAll(async () => {
     idx = emptyIndex();
     tableStore = new Map();
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    try {
-      await loadAll(idx, tableStore, DATA);
-      loaded = true;
-    } catch {
-      loaded = false;
-    }
+    await loadAll(idx, tableStore, FIXTURES_DIR);
     warnSpy.mockRestore();
   });
 
-  // Skip all tests if the data directory isn't available (e.g., CI without data)
-  it("can access the data directory", () => {
-    if (!loaded) {
-      console.warn("Skipping live data tests — 5etools-src/data not found");
-    }
-    expect(true).toBe(true); // always passes; guards subsequent tests
-  });
-
-  // Directory-based kinds
+  // ── Directory-based kinds ──
   it.each(["monster", "spell", "class", "subclass"])("loads %s from subdirectory", (kind) => {
-    if (!loaded) return;
     const records = idx.byKind.get(kind as any) ?? [];
     expect(records.length).toBeGreaterThan(0);
   });
 
-  // Indexed kinds (adventure/book) — metadata from index file, content from subdirectory
-  it.each(["adventure", "book"])("loads %s from indexed path", (kind) => {
-    if (!loaded) return;
-    const records = idx.byKind.get(kind as any) ?? [];
-    expect(records.length).toBeGreaterThan(0);
+  it("loads correct monster count (3 SRD monsters)", () => {
+    const monsters = idx.byKind.get("monster") ?? [];
+    expect(monsters).toHaveLength(3);
+    expect(monsters.some((m) => m.name === "Goblin")).toBe(true);
+    expect(monsters.some((m) => m.name === "Owlbear")).toBe(true);
+    expect(monsters.some((m) => m.name === "Adult Red Dragon")).toBe(true);
   });
 
-  // Verify content data is loaded for adventures
-  it("loads content data for at least some adventures", () => {
-    if (!loaded) return;
-    const adventures = idx.byKind.get("adventure") ?? [];
-    const withContent = adventures.filter((a) => {
-      const stored = idx.byUri.get(a.uri);
-      return (stored?._contentData?.length ?? 0) > 0;
-    });
-    expect(withContent.length).toBeGreaterThan(0);
+  it("loads correct spell count (3 SRD spells)", () => {
+    const spells = idx.byKind.get("spell") ?? [];
+    expect(spells).toHaveLength(3);
+    expect(spells.some((s) => s.name === "Fireball")).toBe(true);
   });
 
-  // Verify content data is loaded for books
-  it("loads content data for at least some books", () => {
-    if (!loaded) return;
-    const books = idx.byKind.get("book") ?? [];
-    const withContent = books.filter((b) => {
-      const stored = idx.byUri.get(b.uri);
-      return (stored?._contentData?.length ?? 0) > 0;
-    });
-    expect(withContent.length).toBeGreaterThan(0);
+  it("loads class and subclass from same directory", () => {
+    const classes = idx.byKind.get("class") ?? [];
+    const subclasses = idx.byKind.get("subclass") ?? [];
+    expect(classes.some((c) => c.name === "Fighter")).toBe(true);
+    expect(subclasses.some((s) => s.name === "Champion")).toBe(true);
   });
 
-  // Single-file kinds — this is the set that was silently broken before
+  // ── Single-file kinds (all 17) ──
   it.each([
     "item",
     "feat",
@@ -1041,43 +1016,319 @@ describe("loadAll against live data", () => {
     "deck",
     "facility",
   ])("loads %s from single file", (kind) => {
-    if (!loaded) return;
     const records = idx.byKind.get(kind as any) ?? [];
     expect(records.length).toBeGreaterThan(0);
   });
 
-  // Multi-key files: verify the extra keys actually contributed entities
-  it("loads diseases into condition kind", () => {
-    if (!loaded) return;
+  // ── extraKey loading (multi-key files) ──
+  it("loads itemGroup into item kind", () => {
+    const items = idx.byKind.get("item") ?? [];
+    // 2 items + 1 itemGroup = 3
+    expect(items).toHaveLength(3);
+    expect(items.some((i) => i.name === "Spell Scroll")).toBe(true);
+  });
+
+  it("loads disease and status into condition kind", () => {
     const conditions = idx.byKind.get("condition") ?? [];
-    // conditions + diseases + statuses should be more than just conditions alone (30)
+    // 2 conditions + 1 disease + 1 status = 4
+    expect(conditions).toHaveLength(4);
+    expect(conditions.some((c) => c.name === "Sewer Plague")).toBe(true);
+    expect(conditions.some((c) => c.name === "Concentration")).toBe(true);
+  });
+
+  it("loads hazard into trap kind", () => {
+    const traps = idx.byKind.get("trap") ?? [];
+    // 1 trap + 1 hazard = 2
+    expect(traps).toHaveLength(2);
+    expect(traps.some((t) => t.name === "Brown Mold")).toBe(true);
+  });
+
+  it("loads subrace into race kind", () => {
+    const races = idx.byKind.get("race") ?? [];
+    // 2 races + 1 subrace = 3
+    expect(races).toHaveLength(3);
+    expect(races.some((r) => r.name === "High Elf")).toBe(true);
+  });
+
+  it("loads languageScript into language kind", () => {
+    const languages = idx.byKind.get("language") ?? [];
+    // 2 languages + 1 languageScript = 3
+    expect(languages).toHaveLength(3);
+    expect(languages.some((l) => l.name === "Dwarvish Script")).toBe(true);
+  });
+
+  it("loads vehicleUpgrade into vehicle kind", () => {
+    const vehicles = idx.byKind.get("vehicle") ?? [];
+    // 1 vehicle + 1 vehicleUpgrade = 2
+    expect(vehicles).toHaveLength(2);
+    expect(vehicles.some((v) => v.name === "Reinforced Hull")).toBe(true);
+  });
+
+  it("loads card into deck kind", () => {
+    const decks = idx.byKind.get("deck") ?? [];
+    // 1 deck + 1 card = 2
+    expect(decks).toHaveLength(2);
+    expect(decks.some((d) => d.name === "The Fool")).toBe(true);
+  });
+
+  // ── Indexed kinds (adventure/book) ──
+  it("loads adventure from index + content", () => {
+    const adventures = idx.byKind.get("adventure") ?? [];
+    expect(adventures).toHaveLength(1);
+    expect(adventures[0].name).toBe("SRD Test Adventure");
+
+    const stored = idx.byUri.get(adventures[0].uri);
+    expect(stored).toBeDefined();
+    expect(stored!._contentData).toBeDefined();
+    expect(stored!._contentData).toHaveLength(2);
+  });
+
+  it("loads book from index + content", () => {
+    const books = idx.byKind.get("book") ?? [];
+    expect(books).toHaveLength(1);
+    expect(books[0].name).toBe("SRD Test Handbook");
+
+    const stored = idx.byUri.get(books[0].uri);
+    expect(stored).toBeDefined();
+    expect(stored!._contentData).toBeDefined();
+    expect(stored!._contentData).toHaveLength(1);
+  });
+
+  // ── Tables ──
+  it("loads display tables from tables.json", () => {
+    expect(tableStore.size).toBeGreaterThan(0);
+    const tableRecords = idx.byKind.get("table") ?? [];
+    expect(tableRecords.length).toBeGreaterThan(0);
+    // Should have display + encounter + name tables
+    const categories = new Set(tableRecords.map((t) => t.facets.category));
+    expect(categories.has("display")).toBe(true);
+  });
+
+  it("loads encounter tables from encounters.json", () => {
+    const tableRecords = idx.byKind.get("table") ?? [];
+    const categories = new Set(tableRecords.map((t) => t.facets.category));
+    expect(categories.has("encounter")).toBe(true);
+  });
+
+  it("loads name tables from names.json", () => {
+    const tableRecords = idx.byKind.get("table") ?? [];
+    const categories = new Set(tableRecords.map((t) => t.facets.category));
+    expect(categories.has("name")).toBe(true);
+  });
+
+  // ── Fluff ──
+  it("loads fluff data", () => {
+    expect(idx.fluffByKey.size).toBeGreaterThan(0);
+    // Verify specific fluff entries
+    expect(idx.fluffByKey.has("monster/MM/goblin")).toBe(true);
+    expect(idx.fluffByKey.has("item/PHB/longsword")).toBe(true);
+  });
+
+  // ── byUri ──
+  it("populates byUri for all loaded entities", () => {
+    // At least one entity per kind should be in byUri
+    for (const [kind, records] of idx.byKind) {
+      if (records.length === 0) continue;
+      const first = records[0];
+      // Table URIs use a different prefix, so only check entity kinds
+      if (kind !== "table") {
+        expect(idx.byUri.has(first.uri)).toBe(true);
+      }
+    }
+  });
+
+  // ── Facets ──
+  it("extracts monster facets", () => {
+    const monsters = idx.byKind.get("monster") ?? [];
+    const goblin = monsters.find((m) => m.name === "Goblin");
+    expect(goblin!.facets.cr).toBe("1/4");
+    expect(goblin!.facets.type).toBe("humanoid");
+  });
+
+  it("extracts spell facets", () => {
+    const spells = idx.byKind.get("spell") ?? [];
+    const fireball = spells.find((s) => s.name === "Fireball");
+    expect(fireball!.facets.level).toBe(3);
+    expect(fireball!.facets.school).toBe("E");
+  });
+
+  it("extracts item facets", () => {
+    const items = idx.byKind.get("item") ?? [];
+    const sword = items.find((i) => i.name === "Longsword");
+    expect(sword!.facets.rarity).toBe("none");
+  });
+
+  it("extracts adventure facets", () => {
+    const adventures = idx.byKind.get("adventure") ?? [];
+    expect(adventures[0].facets.author).toBe("SRD Authors");
+    expect(adventures[0].facets.storyline).toBe("Test Campaign");
+  });
+
+  // ── Source metadata ──
+  it("registers source metadata", () => {
+    expect(idx.sourcesMeta.has("MM")).toBe(true);
+    expect(idx.sourcesMeta.has("PHB")).toBe(true);
+    expect(idx.sourcesMeta.get("MM")!.full).toBe("Monster Manual");
+  });
+
+  // ── Aliases ──
+  it("loads aliases from fixture data", () => {
+    const monsters = idx.byKind.get("monster") ?? [];
+    const goblin = monsters.find((m) => m.name === "Goblin");
+    expect(goblin!.aliases).toEqual(["Gobbo"]);
+    const dragon = monsters.find((m) => m.name === "Adult Red Dragon");
+    expect(dragon!.aliases).toEqual(["Red Dragon", "Wyrm"]);
+  });
+});
+
+// ── Dungeon Church homebrew fixture test ─────────────────────────
+
+describe("loadHomebrew against Dungeon Church fixtures", () => {
+  let idx: AppIndex;
+  let tableStore: Map<string, RollableTable>;
+
+  beforeAll(async () => {
+    idx = emptyIndex();
+    tableStore = new Map();
+    await loadHomebrew(idx, tableStore, path.join(FIXTURES_DIR, "homebrew"));
+  });
+
+  it("loads homebrew monsters from Dungeon Church NPCs", () => {
+    const monsters = idx.byKind.get("monster") ?? [];
+    expect(monsters.some((m) => m.name === "Mildred Magpie")).toBe(true);
+  });
+
+  it("loads homebrew conditions from Dungeon Church Pyora", () => {
+    const conditions = idx.byKind.get("condition") ?? [];
+    expect(conditions.some((c) => c.name === "Intoxicated")).toBe(true);
+  });
+
+  it("loads homebrew languages", () => {
+    const languages = idx.byKind.get("language") ?? [];
+    expect(languages.some((l) => l.name === "Adalindian Whistling")).toBe(true);
+  });
+
+  it("loads homebrew races", () => {
+    const races = idx.byKind.get("race") ?? [];
+    expect(races.some((r) => r.name === "Elfmarked")).toBe(true);
+  });
+
+  it("loads homebrew deities", () => {
+    const deities = idx.byKind.get("deity") ?? [];
+    expect(deities.some((d) => d.name === "Abraxas")).toBe(true);
+  });
+
+  it("marks homebrew records with homebrew flag", () => {
+    const monsters = idx.byKind.get("monster") ?? [];
+    const mildred = monsters.find((m) => m.name === "Mildred Magpie");
+    expect(mildred!.homebrew).toBe(true);
+  });
+
+  it("registers homebrew source metadata", () => {
+    // Both DC sources use abbreviation "CHURCH"
+    const meta = idx.sourcesMeta.get("CHURCH");
+    expect(meta).toBeDefined();
+    expect(meta!.full).toBe("Dungeon Church; Pyora NPCs");
+  });
+});
+
+// ── Live data smoke test (local only — skipped in CI) ────────────
+// Runs loadAll against the real 5etools data directory to verify
+// every kind actually loads at scale. Skipped when data isn't present.
+
+const LIVE_ROOT = process.env.FIVETOOLS_SRC_DIR ?? path.join(process.cwd(), "5etools-src");
+const LIVE_DATA = path.join(LIVE_ROOT, "data");
+const hasLiveData = existsSync(LIVE_DATA);
+
+describe.skipIf(!hasLiveData)("loadAll against live data", () => {
+  let idx: AppIndex;
+  let tableStore: Map<string, RollableTable>;
+
+  beforeAll(async () => {
+    idx = emptyIndex();
+    tableStore = new Map();
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await loadAll(idx, tableStore, LIVE_DATA);
+    warnSpy.mockRestore();
+  });
+
+  // Directory-based kinds
+  it.each(["monster", "spell", "class", "subclass"])("loads %s from subdirectory", (kind) => {
+    const records = idx.byKind.get(kind as any) ?? [];
+    expect(records.length).toBeGreaterThan(0);
+  });
+
+  // Indexed kinds (adventure/book)
+  it.each(["adventure", "book"])("loads %s from indexed path", (kind) => {
+    const records = idx.byKind.get(kind as any) ?? [];
+    expect(records.length).toBeGreaterThan(0);
+  });
+
+  it("loads content data for at least some adventures", () => {
+    const adventures = idx.byKind.get("adventure") ?? [];
+    const withContent = adventures.filter((a) => {
+      const stored = idx.byUri.get(a.uri);
+      return (stored?._contentData?.length ?? 0) > 0;
+    });
+    expect(withContent.length).toBeGreaterThan(0);
+  });
+
+  it("loads content data for at least some books", () => {
+    const books = idx.byKind.get("book") ?? [];
+    const withContent = books.filter((b) => {
+      const stored = idx.byUri.get(b.uri);
+      return (stored?._contentData?.length ?? 0) > 0;
+    });
+    expect(withContent.length).toBeGreaterThan(0);
+  });
+
+  // Single-file kinds
+  it.each([
+    "item",
+    "feat",
+    "background",
+    "race",
+    "condition",
+    "rule",
+    "deity",
+    "vehicle",
+    "trap",
+    "optionalfeature",
+    "psionic",
+    "language",
+    "object",
+    "reward",
+    "recipe",
+    "deck",
+    "facility",
+  ])("loads %s from single file", (kind) => {
+    const records = idx.byKind.get(kind as any) ?? [];
+    expect(records.length).toBeGreaterThan(0);
+  });
+
+  // Multi-key files: verify extra keys contributed at scale
+  it("loads diseases into condition kind", () => {
+    const conditions = idx.byKind.get("condition") ?? [];
     expect(conditions.length).toBeGreaterThan(30);
   });
 
   it("loads hazards into trap kind", () => {
-    if (!loaded) return;
     const traps = idx.byKind.get("trap") ?? [];
-    // traps + hazards should be more than just traps alone (37)
     expect(traps.length).toBeGreaterThan(37);
   });
 
   it("loads itemGroups into item kind", () => {
-    if (!loaded) return;
     const items = idx.byKind.get("item") ?? [];
-    // items + itemGroups should be more than just items alone (2474)
     expect(items.length).toBeGreaterThan(2474);
   });
 
   it("loads subraces into race kind", () => {
-    if (!loaded) return;
     const races = idx.byKind.get("race") ?? [];
-    // races + subraces should be more than just races alone (145)
     expect(races.length).toBeGreaterThan(145);
   });
 
   // Tables
   it("loads rollable tables", () => {
-    if (!loaded) return;
     const tables = idx.byKind.get("table") ?? [];
     expect(tables.length).toBeGreaterThan(0);
     expect(tableStore.size).toBeGreaterThan(0);
@@ -1085,14 +1336,11 @@ describe("loadAll against live data", () => {
 
   // Fluff
   it("loads fluff data", () => {
-    if (!loaded) return;
     expect(idx.fluffByKey.size).toBeGreaterThan(0);
   });
 
-  // byUri populated — won't match byKind exactly since duplicate
-  // name+source pairs (e.g., 2014 vs 2024 editions) collide in byUri
+  // byUri at scale
   it("populates byUri with a substantial number of entries", () => {
-    if (!loaded) return;
     expect(idx.byUri.size).toBeGreaterThan(1000);
   });
 });

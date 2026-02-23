@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "PHB", "full": "Player's Handbook" }]
+  },
+  "background": [
+    {
+      "name": "Acolyte",
+      "source": "PHB",
+      "entries": ["You have spent your life in the service of a temple."]
+    },
+    {
+      "name": "Soldier",
+      "source": "PHB",
+      "entries": ["War has been your life for as long as you care to remember."]
+    }
+  ]
+}

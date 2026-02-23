@@ -1,0 +1,57 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "MM", "full": "Monster Manual" }]
+  },
+  "monster": [
+    {
+      "name": "Goblin",
+      "source": "MM",
+      "cr": "1/4",
+      "type": "humanoid",
+      "size": ["S"],
+      "ac": [{ "ac": 15, "from": ["leather armor", "shield"] }],
+      "hp": { "average": 7, "formula": "2d6" },
+      "speed": { "walk": 30 },
+      "str": 8,
+      "dex": 14,
+      "con": 10,
+      "int": 10,
+      "wis": 8,
+      "cha": 8,
+      "alias": "Gobbo"
+    },
+    {
+      "name": "Owlbear",
+      "source": "MM",
+      "cr": "3",
+      "type": "monstrosity",
+      "size": ["L"],
+      "ac": [{ "ac": 13, "from": ["natural armor"] }],
+      "hp": { "average": 59, "formula": "7d10 + 21" },
+      "speed": { "walk": 40 },
+      "str": 20,
+      "dex": 12,
+      "con": 17,
+      "int": 3,
+      "wis": 12,
+      "cha": 7
+    },
+    {
+      "name": "Adult Red Dragon",
+      "source": "MM",
+      "cr": "17",
+      "type": { "type": "dragon" },
+      "size": ["H"],
+      "ac": [{ "ac": 19, "from": ["natural armor"] }],
+      "hp": { "average": 256, "formula": "19d12 + 133" },
+      "speed": { "walk": 40, "climb": 40, "fly": 80 },
+      "str": 27,
+      "dex": 10,
+      "con": 25,
+      "int": 16,
+      "wis": 13,
+      "cha": 21,
+      "aliases": ["Red Dragon", "Wyrm"]
+    }
+  ]
+}

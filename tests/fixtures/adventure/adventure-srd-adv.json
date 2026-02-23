@@ -1,0 +1,17 @@
+{
+  "data": [
+    {
+      "type": "section",
+      "name": "Introduction",
+      "entries": [
+        "Welcome to this test adventure.",
+        { "type": "entries", "name": "Background", "entries": ["Long ago in a land far away..."] }
+      ]
+    },
+    {
+      "type": "section",
+      "name": "The Dungeon",
+      "entries": ["The dungeon is dark and dangerous."]
+    }
+  ]
+}

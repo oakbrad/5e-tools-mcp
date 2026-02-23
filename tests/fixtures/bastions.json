@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "DMG2024", "full": "Dungeon Master's Guide (2024)" }]
+  },
+  "facility": [
+    {
+      "name": "Armory",
+      "source": "DMG2024",
+      "facilityType": "basic",
+      "level": 5,
+      "entries": ["An armory stores weapons and armor for your bastion's defenders."]
+    }
+  ]
+}

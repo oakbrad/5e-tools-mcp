@@ -1,0 +1,18 @@
+{
+  "variantrule": [
+    {
+      "name": "Flanking",
+      "source": "DMG",
+      "type": "optional",
+      "entries": [
+        "If you regularly use miniatures, flanking gives combatants a simple way to gain advantage."
+      ]
+    },
+    {
+      "name": "Cleaving through Creatures",
+      "source": "DMG",
+      "type": "optional",
+      "entries": ["When a melee attack reduces an undamaged creature to 0 hit points."]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "PHB", "full": "Player's Handbook" }]
+  },
+  "class": [
+    {
+      "name": "Fighter",
+      "source": "PHB",
+      "hd": { "number": 1, "faces": 10 },
+      "proficiency": ["str", "con"],
+      "startingProficiencies": {
+        "armor": ["light", "medium", "heavy", "{@item shield|phb|shields}"],
+        "weapons": ["simple", "martial"]
+      }
+    }
+  ],
+  "subclass": [
+    {
+      "name": "Champion",
+      "source": "PHB",
+      "className": "Fighter",
+      "classSource": "PHB",
+      "shortName": "Champion"
+    }
+  ]
+}

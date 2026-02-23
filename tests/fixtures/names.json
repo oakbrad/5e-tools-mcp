@@ -1,0 +1,28 @@
+{
+  "name": [
+    {
+      "name": "Dwarf",
+      "source": "PHB",
+      "tables": [
+        {
+          "option": "Male",
+          "diceExpression": "d6",
+          "table": [
+            { "min": 1, "max": 2, "result": "Barendd" },
+            { "min": 3, "max": 4, "result": "Oskar" },
+            { "min": 5, "max": 6, "result": "Thorin" }
+          ]
+        },
+        {
+          "option": "Female",
+          "diceExpression": "d6",
+          "table": [
+            { "min": 1, "max": 2, "result": "Amber" },
+            { "min": 3, "max": 4, "result": "Diesa" },
+            { "min": 5, "max": 6, "result": "Kathra" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "PHB", "full": "Player's Handbook" }]
+  },
+  "feat": [
+    {
+      "name": "Alert",
+      "source": "PHB",
+      "entries": ["Always on the lookout for danger, you gain the following benefits."]
+    },
+    {
+      "name": "Grappler",
+      "source": "PHB",
+      "prerequisite": [{ "ability": [{ "str": 13 }] }],
+      "entries": [
+        "You've developed the skills necessary to hold your own in close-quarters grappling."
+      ]
+    }
+  ]
+}

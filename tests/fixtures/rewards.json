@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "sources": [{ "abbreviation": "DMG", "full": "Dungeon Master's Guide" }]
+  },
+  "reward": [
+    {
+      "name": "Blessing of Health",
+      "source": "DMG",
+      "type": "blessing",
+      "entries": ["Your Constitution score increases by 2, up to a maximum of 22."]
+    }
+  ]
+}
