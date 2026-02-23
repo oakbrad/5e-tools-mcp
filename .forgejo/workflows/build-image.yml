@@ -1,0 +1,47 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: git.brads.house
+  IMAGE_NAME: dungeonchurch/5e-tools-mcp
+
+jobs:
+  build:
+    runs-on: docker-host
+    container:
+      image: node:20-bookworm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Docker CLI
+        run: apt-get update && apt-get install -y --no-install-recommends docker.io
+
+      - name: Login to Forgejo Registry
+        run: |
+          echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ env.REGISTRY }} -u agent --password-stdin
+
+      - name: Build image
+        run: |
+          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+
+      - name: Push to registry
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  notify:
+    needs: build
+    runs-on: docker
+    container:
+      image: node:20-bookworm
+    steps:
+      - name: Trigger Cybersyn MCP deployment
+        uses: https://git.michaelsasser.org/actions/workflow-dispatch@main
+        with:
+          repository: commune/cybersyn
+          workflowname: deploy-mcp.yaml
+          token: ${{ secrets.DISPATCH_TOKEN }}
