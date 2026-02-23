@@ -1,8 +1,0 @@
----
-alwaysApply: true
----
-# Read-only Upstream Dataset
-
-- Treat all files under `5etools-src/` as immutable input data.
-- Never edit, reformat, or auto-fix JSON/HTML/JS/CSS inside `5etools-src/**`.
-- If transformation is required, do it at read time in `src/` and keep outputs out of the dataset.

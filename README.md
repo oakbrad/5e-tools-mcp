@@ -1,41 +1,20 @@
-# mcp-5etools — MCP Server for 5eTools Data
+# mcp-5etools — MCP Server for D&D 5e Data
 
-Senior Platform Engineer goal: **Expose 5eTools-style data to LLMs via Model Context Protocol (MCP)** so the model can
-- **search** rules/entities,
-- **fetch** structured records (monster/spell/item/etc.),
-- **render** 5eTools `entries` + `{@tags}` into Markdown/HTML,
-- **cite** stable URIs (so the model can reference content consistently).
+An MCP (Model Context Protocol) server that exposes D&D 5th Edition data from [5eTools](https://github.com/5etools-mirror-3/5etools-src) to LLMs and AI agents. Search, fetch, render, and cite game entities through structured tool calls.
 
-> **Important layout assumption:** This repository contains a checked-out copy of **`5etools-src/`** at the project root:
->
-> ```text
-> / (project root)
-> ├─ 5etools-src/        # the upstream 5eTools data repo (not included in this package)
-> ├─ src/                # MCP server implementation
-> ├─ README.md           # you are here
-> ├─ .cursorrules        # Cursor AI project guidance
-> └─ ...
-> ```
->
-> The server **reads data from `./5etools-src` by default**. Do not modify upstream content; treat it as read-only data.
+**Features:**
+
+- **19 tools** for search, entity lookup, encounter building, DM prep, and table rolling
+- **24 entity kinds** (monsters, spells, items, feats, classes, and more)
+- **9 reusable prompts** for common D&D assistant workflows
+- **Homebrew support** with priority tie-breaking (homebrew surfaces first)
+- **2014 & 2024 ruleset** awareness with configurable preference
+- Fuzzy search with aliases, faceted filtering, and source/ruleset scoping
+- **Docker ready** with HTTP transport and auto-bootstrap
+
+> **Data requirement:** This server reads from a local `5etools-src/` directory. No copyrighted content is included in this package.
 
 ---
-
-## Why this server exists
-
-LLMs don’t need whole books — they need **fast, reliable primitives**:
-1. *Search* by name/aliases with minimal facets (e.g., CR/type for monsters; level/school for spells).
-2. *Get entity* in structured JSON or rendered Markdown/HTML.
-3. *Render entries* with `{@tags}` (e.g., `{@spell fireball}`) into linkable text.
-4. *List sources* and *resolve rules sections* across 2014 vs 2024 rulesets.
-5. *Stable URIs* to cite/compare entities.
-
-This MCP server provides those primitives so downstream LLM agents stop guessing and start calling tools.
-
----
-
-
-> **Cursor Rules:** This repo uses **Project Rules** in `.cursor/rules/*.mdc` (MDC format). Legacy `.cursorrules` is removed. See: `.cursor/rules/`.
 
 ## Quickstart
 
@@ -43,153 +22,244 @@ This MCP server provides those primitives so downstream LLM agents stop guessing
 # 1) Ensure Node 18+
 node -v
 
-# 2) Place/clone the upstream 5eTools repository at project root:
-git clone https://github.com/5etools-mirror-3/5etools-src ./5etools-src
-# (Optionally pin to a specific tag for deterministic behavior.)
-
-# 3) Install & build
+# 2) Install, build, and run (data auto-bootstraps on first start)
 npm install
 npm run build
-
-# 4) Run (stdio transport)
 npm start
-# or: node dist/server.js
 ```
 
-If you prefer an explicit path, set `FIVETOOLS_SRC_DIR`:
+On first start, the server automatically clones the 5eTools data repo if `5etools-src/` doesn't exist. If git isn't installed, it downloads the tarball instead.
+
+To use a custom data path:
+
 ```bash
-FIVETOOLS_SRC_DIR=./5etools-src npm start
+FIVETOOLS_SRC_DIR=/path/to/data npm start
 ```
+
+### Docker
+
+```bash
+# Build the image (requires npm run build first)
+npm run build
+docker build -t mcp-5etools .
+
+# Run with auto-bootstrap (data cloned on first start)
+docker run -p 3524:3524 -v 5etools-data:/data mcp-5etools
+
+# Or with docker-compose
+docker compose up
+```
+
+The Docker image runs in HTTP mode on port 3524. Data is stored in a named volume and only cloned once.
+
+### Environment Variables
+
+| Variable           | Default                                              | Description                                |
+| ------------------ | ---------------------------------------------------- | ------------------------------------------ |
+| `FIVETOOLS_SRC_DIR`| `./5etools-src`                                      | Path to the 5eTools data directory         |
+| `MCP_HTTP_PORT`    | *(unset — stdio mode)*                               | Set to enable HTTP transport on this port  |
+| `5E_MIRROR_REPO`   | `https://github.com/5etools-mirror-3/5etools-src`    | Git repo URL for auto-bootstrap            |
+| `HOMEBREW_REPO`    | *(unset — empty homebrew dir)*                       | Git repo URL for homebrew auto-bootstrap   |
+
+### Homebrew
+
+Place homebrew JSON files in `5etools-src/homebrew/` with an `index.json`:
+
+```json
+{ "toImport": ["my-campaign.json"] }
+```
+
+Or set `HOMEBREW_REPO` to auto-clone a homebrew repo on first start:
+
+```bash
+HOMEBREW_REPO=https://git.example.com/user/my-homebrew.git npm start
+```
+
+Homebrew entities get automatic search priority — when an official and homebrew entity share the same name, homebrew surfaces first.
 
 ---
 
-## MCP Surfaces (Tools & Resources)
+## Tools (19)
 
-**Tools**
-- `search_entities({ query, kinds?, sources?, ruleset?, limit? })` — generic fuzzy search across all entity types
-- `search_spells({ name?, level?, school?, classes?, source?, ruleset?, limit? })` — domain-specific spell search
-- `search_monsters({ name?, cr_min?, cr_max?, type?, source?, ruleset?, limit? })` — domain-specific monster search
-- `search_items({ name?, rarity?, type?, attunement?, source?, ruleset?, limit? })` — domain-specific item search
-- `get_entity({ uri? | key:{kind,name,source?,ruleset?}, format?, includeFluff? })`
-- `render_entries({ entries, format? })`
-- `list_sources({ ruleset?, kind? })`
-- `get_rules_section({ slugOrTitle, ruleset? })`
-- `resolve_tag({ tag })`
+### Search Tools
 
-**Resources**
-- `fiveet://entity/{kind}/{source}/{slug}` → entity JSON
+| Tool              | Description                                      |
+| ----------------- | ------------------------------------------------ |
+| `search_entities` | Generic fuzzy search across all entity types     |
+| `search_spells`   | Search spells by name, level, school, class      |
+| `search_monsters` | Search monsters by name, CR range, type          |
+| `search_items`    | Search items by name, rarity, type, attunement   |
+| `search_tables`   | Search rollable tables by name, category, source |
 
-Minimal tag rendering supports common tags (`{@spell}`, `{@item}`, `{@condition}`, `{@dice}`, `{@damage}`, `{@dc}`, `{@hit}`) and can be extended.
+### Entity Tools
 
-### Domain-Specific Search Examples
+| Tool                | Description                                                   |
+| ------------------- | ------------------------------------------------------------- |
+| `get_entity`        | Fetch entity by URI or key (kind + name), JSON or markdown    |
+| `render_entries`    | Render 5eTools entry blobs into markdown                      |
+| `list_sources`      | List all known source books, filterable by ruleset/kind       |
+| `get_rules_section` | Look up variant rules by slug or title                        |
+| `resolve_tag`       | Resolve a 5eTools inline tag (e.g., `{@spell Fireball\|PHB}`) |
 
-**Search for 3rd-level evocation spells:**
-```json
-{
-  "tool": "search_spells",
-  "parameters": {
-    "level": 3,
-    "school": "E"
-  }
-}
+### Encounter Tools
+
+| Tool                         | Description                                            |
+| ---------------------------- | ------------------------------------------------------ |
+| `calculate_party_thresholds` | Calculate XP thresholds for a party                    |
+| `evaluate_encounter`         | Evaluate difficulty of an encounter composition        |
+| `suggest_encounter`          | Generate encounter suggestions for a target difficulty |
+| `scale_encounter`            | Scale an encounter for different party size/level      |
+| `random_encounter`           | Generate a random encounter by environment and level   |
+
+### DM Tools
+
+| Tool                  | Description                                          |
+| --------------------- | ---------------------------------------------------- |
+| `generate_treasure`   | Generate treasure by CR (individual) or tier (hoard) |
+| `suggest_magic_items` | Suggest level-appropriate magic items for a party    |
+| `roll_on_table`       | Roll on a specific rollable table                    |
+| `roll_on_tables`      | Roll on multiple tables in sequence                  |
+
+---
+
+## Entity Kinds (24)
+
+| Kind              | JSON Key          | Source                                   |
+| ----------------- | ----------------- | ---------------------------------------- |
+| `monster`         | `monster`         | bestiary/                                |
+| `spell`           | `spell`           | spells/                                  |
+| `item`            | `item`            | items.json                               |
+| `feat`            | `feat`            | feats.json                               |
+| `background`      | `background`      | backgrounds.json                         |
+| `race`            | `race`            | races.json                               |
+| `class`           | `class`           | class/                                   |
+| `subclass`        | `subclass`        | class/                                   |
+| `condition`       | `condition`       | conditionsdiseases.json                  |
+| `rule`            | `variantrule`     | variantrules.json                        |
+| `adventure`       | `adventure`       | adventures.json + adventure/             |
+| `book`            | `book`            | books.json + book/                       |
+| `table`           | `table`           | tables.json, encounters.json, names.json |
+| `deity`           | `deity`           | deities.json                             |
+| `vehicle`         | `vehicle`         | vehicles.json                            |
+| `trap`            | `trap`            | trapshazards.json                        |
+| `optionalfeature` | `optionalfeature` | optionalfeatures.json                    |
+| `psionic`         | `psionic`         | psionics.json                            |
+| `language`        | `language`        | languages.json                           |
+| `object`          | `object`          | objects.json                             |
+| `reward`          | `reward`          | rewards.json                             |
+| `recipe`          | `recipe`          | recipes.json                             |
+| `deck`            | `deck`            | decks.json                               |
+| `facility`        | `facility`        | bastions.json                            |
+
+---
+
+## Prompts (9)
+
+Reusable LLM prompt templates registered as MCP prompts:
+
+| Prompt                | Description                                        |
+| --------------------- | -------------------------------------------------- |
+| `agent-system`        | System prompt for MCP-first D&D assistant behavior |
+| `search-lookup`       | Workflow for searching and looking up entities     |
+| `compare-entities`    | Side-by-side entity comparison tables              |
+| `render-entries`      | Render 5eTools entries blobs to readable text      |
+| `rules-qa`            | Rules question-answering workflow                  |
+| `resolve-tag`         | Resolve inline `{@tag}` references                 |
+| `adventure-parsing`   | Parse adventure/book sections                      |
+| `house-rules-overlay` | Layer house rules over official content            |
+| `eval-checklist`      | Self-evaluation checklist before responding        |
+
+---
+
+## Resources
+
+Entity URIs follow the pattern:
+
+```
+fiveet://entity/{kind}/{source}/{slug}
 ```
 
-**Search for wizards spells named "fireball":**
-```json
-{
-  "tool": "search_spells",
-  "parameters": {
-    "name": "fireball",
-    "classes": ["wizard"]
-  }
-}
+Example: `fiveet://entity/spell/PHB/fireball`
+
+MCP clients can fetch entity JSON via these stable URIs.
+
+---
+
+## Development
+
+```bash
+npm run build        # TypeScript → dist/
+npm test             # Run all tests (vitest)
+npm run lint         # ESLint check
+npm run format:check # Prettier check
+npm run lint:fix     # Auto-fix lint issues
+npm run format       # Auto-format with prettier
 ```
 
-**Search for CR 5-10 dragons:**
+### Search Examples
+
+**3rd-level evocation spells:**
+
 ```json
-{
-  "tool": "search_monsters",
-  "parameters": {
-    "cr_min": 5,
-    "cr_max": 10,
-    "type": "dragon"
-  }
-}
+{ "tool": "search_spells", "parameters": { "level": 3, "school": "E" } }
 ```
 
-**Search for legendary items that require attunement:**
+**CR 5-10 dragons:**
+
 ```json
-{
-  "tool": "search_items",
-  "parameters": {
-    "rarity": "legendary",
-    "attunement": true
-  }
-}
+{ "tool": "search_monsters", "parameters": { "cr_min": 5, "cr_max": 10, "type": "dragon" } }
+```
+
+**Legendary items requiring attunement:**
+
+```json
+{ "tool": "search_items", "parameters": { "rarity": "legendary", "attunement": true } }
 ```
 
 **Notes:**
-- `school` uses abbreviated codes: A (abjuration), C (conjuration), D (divination), E (evocation), I (illusion), N (necromancy), T (transmutation), V (enchantment)
-- `cr_min`/`cr_max` accept fractional values (e.g., 0.125 for CR 1/8, 0.25 for CR 1/4)
-- All domain-specific tools support `ruleset` filtering ("2014", "2024", or "any")
-- Use `search_entities` for cross-domain or exploratory searches
+
+- `school` codes: A (abjuration), C (conjuration), D (divination), E (evocation), I (illusion), N (necromancy), T (transmutation), V (enchantment)
+- `cr_min`/`cr_max` accept fractions: 0.125 (CR 1/8), 0.25 (CR 1/4), 0.5 (CR 1/2)
+- All search tools support `ruleset` filtering (`"2014"`, `"2024"`, or `"any"`)
 
 ---
 
-## Repository scripts
+## Architecture
 
-- `npm run build` — TypeScript → `dist/`
-- `npm start` — launch MCP server on stdio
-
----
-
-## Project constraints
-
-- **Read-only**: Treat `5etools-src/` as immutable input.
-- **Determinism**: For production, **pin a 5eTools tag/commit**.
-- **Licensing**: This project ships *no* 5eTools content. Review upstream licensing before redistribution.
-
----
-
-## Integration notes
-
-- MCP clients (e.g., Claude Desktop, OpenWebUI MCP, custom hosts) can execute this binary and communicate over stdio.
-- Prefer returning `resource_link`s to `fiveet://entity/...` when possible; clients can fetch entity JSON as needed.
-- When disambiguation is required, prefer **2024** rules unless explicitly asked for 2014.
-
----
-
-## Roadmap (next steps)
-
-- Expand tag renderer to cover 20+ `{@...}` forms with unit tests.
-- Add fuzzy search (Minisearch/Lunr) with facets and source/ruleset filters.
-- Add `get_rules_section`, `resolve_tag`, and `list_sources` tools.
-- Provide Dockerfile + GitHub Actions CI for lint/test/build.
-- Optional: expose `/schema/{kind}` resources with JSON Schema snapshots.
+```
+src/
+├── server.ts           # MCP server setup, stdio + HTTP transport
+├── bootstrap.ts        # Auto-bootstrap data/homebrew via git or tarball
+├── loader.ts           # Data loading pipeline (official + homebrew)
+├── search.ts           # Fuzzy search, scoring, domain-specific searches
+├── helpers.ts          # Shared utilities (URI building, tag maps, entity lookup)
+├── renderer.ts         # 5eTools entries/tags → markdown
+├── encounter.ts        # XP thresholds, encounter evaluation
+├── scale-encounter.ts  # Encounter scaling strategies
+├── random-encounter.ts # Random encounter generation
+├── magic-items.ts      # Magic item suggestion logic
+├── treasure.ts         # Treasure generation (individual + hoard)
+├── tables.ts           # Table normalization, dice rolling, search
+├── types.ts            # Shared type definitions
+├── utils.ts            # Utility functions
+└── tools/
+    ├── search-tools.ts    # 5 search tool handlers
+    ├── entity-tools.ts    # 5 entity tool handlers
+    ├── encounter-tools.ts # 5 encounter tool handlers
+    ├── dm-tools.ts        # 4 DM tool handlers
+    └── prompt-tools.ts    # Dynamic prompt registration
+```
 
 ---
 
-## Dev Tips
+## Constraints
 
-- Use `npm run build` after changes; TypeScript config is strict.
-- The loader builds in-memory indices at startup; for large-scale use, consider persistent indices on disk.
-- Keep renderer pure/deterministic for reliable LLM outputs.
+- **Read-only data**: `5etools-src/` is treated as immutable input
+- **Pin for production**: Use a specific 5eTools tag/commit for deterministic behavior
+- **Licensing**: No 5eTools content is shipped. Review upstream licensing before redistribution
 
 ---
 
 ## License
 
-This MCP server’s code is MIT-licensed (see `LICENSE`). Upstream 5eTools data is not included and is subject to its own licensing.
-
-
-## Prompts
-Reusable LLM prompt templates live in `./prompts/`:
-- `00-agent-system.md` — system-level behavior (MCP-first)
-- `10-search-lookup.md` — lookup flow
-- `20-compare-entities.md` — comparison tables
-- `30-render-entries.md` — render 5eTools entries blobs
-- `40-rules-qa.md` — rules Q&A
-- `50-resolve-tag.md` — inline tag resolver
-- `60-adventure-parsing.md` — module parsing notes
-- `70-house-rules-overlay.md` — official + house rules
-- `80-eval-checklist.md` — preflight checklist
+This MCP server's code is MIT-licensed (see `LICENSE`). Upstream 5eTools data is subject to its own licensing.

@@ -1,0 +1,16 @@
+services:
+  mcp-5etools:
+    build: .
+    ports:
+      - "3524:3524"
+    volumes:
+      - 5etools-data:/data
+    environment:
+      - MCP_HTTP_PORT=3524
+      # Clone source for 5etools data (default: GitHub mirror)
+      # - 5E_MIRROR_REPO=https://github.com/5etools-mirror-3/5etools-src
+      # Clone source for homebrew data (optional — omit for empty homebrew dir)
+      # - HOMEBREW_REPO=https://git.example.com/user/my-homebrew.git
+
+volumes:
+  5etools-data:

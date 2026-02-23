@@ -1,7 +1,7 @@
 // src/magic-items.ts
 // Magic item suggestion logic for DM prep
 
-import { searchItems, type SearchIndex, type RecordLite } from "./search.js";
+import { searchItems, type SearchIndex } from "./search.js";
 
 export type SuggestMagicItemsParams = {
   party_level?: number;
@@ -44,25 +44,25 @@ export function getTierRarities(tier: "tier1" | "tier2" | "tier3" | "tier4"): {
       // Tier 1 (levels 1-4): Common and Uncommon, with slight preference for Uncommon
       return {
         rarities: ["common", "uncommon"],
-        weights: [3, 7]
+        weights: [3, 7],
       };
     case "tier2":
       // Tier 2 (levels 5-10): Uncommon and Rare, balanced
       return {
         rarities: ["uncommon", "rare"],
-        weights: [5, 5]
+        weights: [5, 5],
       };
     case "tier3":
       // Tier 3 (levels 11-16): Rare and Very Rare, slight preference for Very Rare
       return {
         rarities: ["rare", "very rare"],
-        weights: [4, 6]
+        weights: [4, 6],
       };
     case "tier4":
       // Tier 4 (levels 17-20): Very Rare and Legendary, with some Legendary
       return {
         rarities: ["very rare", "legendary"],
-        weights: [6, 4]
+        weights: [6, 4],
       };
   }
 }
@@ -101,7 +101,7 @@ function shuffle<T>(array: T[]): T[] {
  */
 export function suggestMagicItems(
   idx: SearchIndex,
-  params: SuggestMagicItemsParams
+  params: SuggestMagicItemsParams,
 ): MagicItemSuggestion[] {
   const {
     party_level,
@@ -110,7 +110,7 @@ export function suggestMagicItems(
     rarity: requestedRarity,
     count = 5,
     ruleset = "any",
-    source
+    source,
   } = params;
 
   // Determine tier from party_level or explicit tier parameter
@@ -128,7 +128,7 @@ export function suggestMagicItems(
   const tierRarities = getTierRarities(targetTier);
 
   // If a specific rarity is requested, only use that
-  const useRarities = requestedRarity ? [requestedRarity] : tierRarities.rarities;
+  const _useRarities = requestedRarity ? [requestedRarity] : tierRarities.rarities;
 
   // Build suggestions
   const suggestions: MagicItemSuggestion[] = [];
@@ -147,7 +147,7 @@ export function suggestMagicItems(
       type: item_type,
       source,
       ruleset,
-      limit: 50
+      limit: 50,
     });
 
     // Shuffle candidates and pick one we haven't used
@@ -159,7 +159,7 @@ export function suggestMagicItems(
 
         // Get full entity data for description
         const entity = idx.byUri.get(candidate.uri);
-        const itemType = entity?.type || "unknown";
+        const itemType = candidate.facets.type || entity?.type || "unknown";
 
         // Build description from entries if available
         let description: string | undefined;
@@ -187,7 +187,7 @@ export function suggestMagicItems(
           type: itemType,
           source: candidate.source,
           description,
-          uri: candidate.uri
+          uri: candidate.uri,
         });
 
         break; // Move to next iteration

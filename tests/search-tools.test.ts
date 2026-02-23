@@ -3,9 +3,9 @@ import {
   searchSpells,
   searchMonsters,
   searchItems,
+  fuzzyScore,
   type SearchIndex,
   type RecordLite,
-  type Ruleset
 } from "../src/search.js";
 
 /**
@@ -19,10 +19,10 @@ import {
 function createTestIndex(): SearchIndex {
   const idx: SearchIndex = {
     byKind: new Map(),
-    byUri: new Map()
+    byUri: new Map(),
   };
 
-  // Mock spell data
+  // Mock spell data (facets.classes mirrors classes.fromClassList in byUri)
   const spells: RecordLite[] = [
     {
       uri: "fiveet://entity/spell/PHB/fireball",
@@ -30,8 +30,8 @@ function createTestIndex(): SearchIndex {
       slug: "fireball",
       source: "PHB",
       ruleset: "2014",
-      facets: { level: 3, school: "E" },
-      kind: "spell"
+      facets: { level: 3, school: "E", classes: ["sorcerer", "wizard"] },
+      kind: "spell",
     },
     {
       uri: "fiveet://entity/spell/PHB/magic-missile",
@@ -39,8 +39,8 @@ function createTestIndex(): SearchIndex {
       slug: "magic-missile",
       source: "PHB",
       ruleset: "2014",
-      facets: { level: 1, school: "E" },
-      kind: "spell"
+      facets: { level: 1, school: "E", classes: ["wizard"] },
+      kind: "spell",
     },
     {
       uri: "fiveet://entity/spell/PHB/cure-wounds",
@@ -48,8 +48,8 @@ function createTestIndex(): SearchIndex {
       slug: "cure-wounds",
       source: "PHB",
       ruleset: "2014",
-      facets: { level: 1, school: "V" },
-      kind: "spell"
+      facets: { level: 1, school: "V", classes: ["cleric", "bard"] },
+      kind: "spell",
     },
     {
       uri: "fiveet://entity/spell/PHB/shield",
@@ -57,8 +57,8 @@ function createTestIndex(): SearchIndex {
       slug: "shield",
       source: "PHB",
       ruleset: "2014",
-      facets: { level: 1, school: "A" },
-      kind: "spell"
+      facets: { level: 1, school: "A", classes: ["wizard", "sorcerer"] },
+      kind: "spell",
     },
     {
       uri: "fiveet://entity/spell/PHB/wish",
@@ -66,8 +66,8 @@ function createTestIndex(): SearchIndex {
       slug: "wish",
       source: "PHB",
       ruleset: "2014",
-      facets: { level: 9, school: "C" },
-      kind: "spell"
+      facets: { level: 9, school: "C", classes: ["wizard"] },
+      kind: "spell",
     },
     {
       uri: "fiveet://entity/spell/PHB/light",
@@ -75,8 +75,8 @@ function createTestIndex(): SearchIndex {
       slug: "light",
       source: "PHB",
       ruleset: "2014",
-      facets: { level: 0, school: "E" },
-      kind: "spell"
+      facets: { level: 0, school: "E", classes: ["cleric", "wizard"] },
+      kind: "spell",
     },
     {
       uri: "fiveet://entity/spell/XPHB/eldritch-blast",
@@ -84,9 +84,9 @@ function createTestIndex(): SearchIndex {
       slug: "eldritch-blast",
       source: "XPHB",
       ruleset: "2024",
-      facets: { level: 0, school: "E" },
-      kind: "spell"
-    }
+      facets: { level: 0, school: "E", classes: ["warlock"] },
+      kind: "spell",
+    },
   ];
 
   // Add spell entities with class info
@@ -97,17 +97,17 @@ function createTestIndex(): SearchIndex {
     classes: {
       fromClassList: [
         { name: "Sorcerer", source: "PHB" },
-        { name: "Wizard", source: "PHB" }
-      ]
-    }
+        { name: "Wizard", source: "PHB" },
+      ],
+    },
   });
   idx.byUri.set("fiveet://entity/spell/PHB/magic-missile", {
     name: "Magic Missile",
     level: 1,
     school: "E",
     classes: {
-      fromClassList: [{ name: "Wizard", source: "PHB" }]
-    }
+      fromClassList: [{ name: "Wizard", source: "PHB" }],
+    },
   });
   idx.byUri.set("fiveet://entity/spell/PHB/cure-wounds", {
     name: "Cure Wounds",
@@ -116,9 +116,9 @@ function createTestIndex(): SearchIndex {
     classes: {
       fromClassList: [
         { name: "Cleric", source: "PHB" },
-        { name: "Bard", source: "PHB" }
-      ]
-    }
+        { name: "Bard", source: "PHB" },
+      ],
+    },
   });
   idx.byUri.set("fiveet://entity/spell/PHB/shield", {
     name: "Shield",
@@ -127,17 +127,17 @@ function createTestIndex(): SearchIndex {
     classes: {
       fromClassList: [
         { name: "Wizard", source: "PHB" },
-        { name: "Sorcerer", source: "PHB" }
-      ]
-    }
+        { name: "Sorcerer", source: "PHB" },
+      ],
+    },
   });
   idx.byUri.set("fiveet://entity/spell/PHB/wish", {
     name: "Wish",
     level: 9,
     school: "C",
     classes: {
-      fromClassList: [{ name: "Wizard", source: "PHB" }]
-    }
+      fromClassList: [{ name: "Wizard", source: "PHB" }],
+    },
   });
   idx.byUri.set("fiveet://entity/spell/PHB/light", {
     name: "Light",
@@ -146,17 +146,17 @@ function createTestIndex(): SearchIndex {
     classes: {
       fromClassList: [
         { name: "Cleric", source: "PHB" },
-        { name: "Wizard", source: "PHB" }
-      ]
-    }
+        { name: "Wizard", source: "PHB" },
+      ],
+    },
   });
   idx.byUri.set("fiveet://entity/spell/XPHB/eldritch-blast", {
     name: "Eldritch Blast",
     level: 0,
     school: "E",
     classes: {
-      fromClassList: [{ name: "Warlock", source: "XPHB" }]
-    }
+      fromClassList: [{ name: "Warlock", source: "XPHB" }],
+    },
   });
 
   idx.byKind.set("spell", spells);
@@ -170,7 +170,7 @@ function createTestIndex(): SearchIndex {
       source: "MM",
       ruleset: "2014",
       facets: { cr: "24", type: "dragon" },
-      kind: "monster"
+      kind: "monster",
     },
     {
       uri: "fiveet://entity/monster/MM/goblin",
@@ -179,7 +179,7 @@ function createTestIndex(): SearchIndex {
       source: "MM",
       ruleset: "2014",
       facets: { cr: "0.25", type: "humanoid" },
-      kind: "monster"
+      kind: "monster",
     },
     {
       uri: "fiveet://entity/monster/MM/skeleton",
@@ -188,7 +188,7 @@ function createTestIndex(): SearchIndex {
       source: "MM",
       ruleset: "2014",
       facets: { cr: "0.25", type: "undead" },
-      kind: "monster"
+      kind: "monster",
     },
     {
       uri: "fiveet://entity/monster/MM/vampire",
@@ -197,7 +197,7 @@ function createTestIndex(): SearchIndex {
       source: "MM",
       ruleset: "2014",
       facets: { cr: "13", type: "undead" },
-      kind: "monster"
+      kind: "monster",
     },
     {
       uri: "fiveet://entity/monster/MM/tarrasque",
@@ -206,7 +206,7 @@ function createTestIndex(): SearchIndex {
       source: "MM",
       ruleset: "2014",
       facets: { cr: "30", type: "monstrosity" },
-      kind: "monster"
+      kind: "monster",
     },
     {
       uri: "fiveet://entity/monster/MM/commoner",
@@ -215,7 +215,7 @@ function createTestIndex(): SearchIndex {
       source: "MM",
       ruleset: "2014",
       facets: { cr: "0", type: "humanoid" },
-      kind: "monster"
+      kind: "monster",
     },
     {
       uri: "fiveet://entity/monster/MM/sprite",
@@ -224,7 +224,7 @@ function createTestIndex(): SearchIndex {
       source: "MM",
       ruleset: "2014",
       facets: { cr: "0.125", type: "fey" },
-      kind: "monster"
+      kind: "monster",
     },
     {
       uri: "fiveet://entity/monster/MM/giant-spider",
@@ -233,7 +233,7 @@ function createTestIndex(): SearchIndex {
       source: "MM",
       ruleset: "2014",
       facets: { cr: "1", type: "beast" },
-      kind: "monster"
+      kind: "monster",
     },
     {
       uri: "fiveet://entity/monster/XMM/young-red-dragon",
@@ -242,13 +242,13 @@ function createTestIndex(): SearchIndex {
       source: "XMM",
       ruleset: "2024",
       facets: { cr: "10", type: "dragon" },
-      kind: "monster"
-    }
+      kind: "monster",
+    },
   ];
 
   idx.byKind.set("monster", monsters);
 
-  // Mock item data
+  // Mock item data (facets.type mirrors entity type in byUri)
   const items: RecordLite[] = [
     {
       uri: "fiveet://entity/item/DMG/longsword",
@@ -256,8 +256,8 @@ function createTestIndex(): SearchIndex {
       slug: "longsword",
       source: "DMG",
       ruleset: "2014",
-      facets: { rarity: "none", reqAttune: false },
-      kind: "item"
+      facets: { rarity: "none", reqAttune: false, type: "weapon" },
+      kind: "item",
     },
     {
       uri: "fiveet://entity/item/DMG/+1-longsword",
@@ -265,8 +265,8 @@ function createTestIndex(): SearchIndex {
       slug: "+1-longsword",
       source: "DMG",
       ruleset: "2014",
-      facets: { rarity: "uncommon", reqAttune: false },
-      kind: "item"
+      facets: { rarity: "uncommon", reqAttune: false, type: "weapon" },
+      kind: "item",
     },
     {
       uri: "fiveet://entity/item/DMG/bag-of-holding",
@@ -274,8 +274,8 @@ function createTestIndex(): SearchIndex {
       slug: "bag-of-holding",
       source: "DMG",
       ruleset: "2014",
-      facets: { rarity: "uncommon", reqAttune: false },
-      kind: "item"
+      facets: { rarity: "uncommon", reqAttune: false, type: "wondrous item" },
+      kind: "item",
     },
     {
       uri: "fiveet://entity/item/DMG/cloak-of-protection",
@@ -283,8 +283,8 @@ function createTestIndex(): SearchIndex {
       slug: "cloak-of-protection",
       source: "DMG",
       ruleset: "2014",
-      facets: { rarity: "uncommon", reqAttune: true },
-      kind: "item"
+      facets: { rarity: "uncommon", reqAttune: true, type: "wondrous item" },
+      kind: "item",
     },
     {
       uri: "fiveet://entity/item/DMG/flame-tongue",
@@ -292,8 +292,8 @@ function createTestIndex(): SearchIndex {
       slug: "flame-tongue",
       source: "DMG",
       ruleset: "2014",
-      facets: { rarity: "rare", reqAttune: true },
-      kind: "item"
+      facets: { rarity: "rare", reqAttune: true, type: "weapon" },
+      kind: "item",
     },
     {
       uri: "fiveet://entity/item/DMG/ring-of-wishes",
@@ -301,8 +301,8 @@ function createTestIndex(): SearchIndex {
       slug: "ring-of-wishes",
       source: "DMG",
       ruleset: "2014",
-      facets: { rarity: "legendary", reqAttune: true },
-      kind: "item"
+      facets: { rarity: "legendary", reqAttune: true, type: "ring" },
+      kind: "item",
     },
     {
       uri: "fiveet://entity/item/DMG/holy-avenger",
@@ -310,8 +310,8 @@ function createTestIndex(): SearchIndex {
       slug: "holy-avenger",
       source: "DMG",
       ruleset: "2014",
-      facets: { rarity: "legendary", reqAttune: true },
-      kind: "item"
+      facets: { rarity: "legendary", reqAttune: true, type: "weapon" },
+      kind: "item",
     },
     {
       uri: "fiveet://entity/item/DMG/deck-of-many-things",
@@ -319,8 +319,8 @@ function createTestIndex(): SearchIndex {
       slug: "deck-of-many-things",
       source: "DMG",
       ruleset: "2014",
-      facets: { rarity: "artifact", reqAttune: false },
-      kind: "item"
+      facets: { rarity: "artifact", reqAttune: false, type: "wondrous item" },
+      kind: "item",
     },
     {
       uri: "fiveet://entity/item/DMG/healing-potion",
@@ -328,8 +328,8 @@ function createTestIndex(): SearchIndex {
       slug: "healing-potion",
       source: "DMG",
       ruleset: "2014",
-      facets: { rarity: "common", reqAttune: false },
-      kind: "item"
+      facets: { rarity: "common", reqAttune: false, type: "potion" },
+      kind: "item",
     },
     {
       uri: "fiveet://entity/item/XDMG/staff-of-power",
@@ -337,9 +337,9 @@ function createTestIndex(): SearchIndex {
       slug: "staff-of-power",
       source: "XDMG",
       ruleset: "2024",
-      facets: { rarity: "very rare", reqAttune: true },
-      kind: "item"
-    }
+      facets: { rarity: "very rare", reqAttune: true, type: "staff" },
+      kind: "item",
+    },
   ];
 
   // Add item entities with type info
@@ -369,13 +369,13 @@ describe("search_spells", () => {
   it("filters spells by level 0 (cantrips)", () => {
     const results = searchSpells(idx, { level: 0 });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Eldritch Blast", "Light"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Eldritch Blast", "Light"]);
   });
 
   it("filters spells by level 1", () => {
     const results = searchSpells(idx, { level: 1 });
     expect(results.length).toBe(3);
-    expect(results.map(r => r.name).sort()).toEqual(["Cure Wounds", "Magic Missile", "Shield"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Cure Wounds", "Magic Missile", "Shield"]);
   });
 
   it("filters spells by level 3", () => {
@@ -393,11 +393,11 @@ describe("search_spells", () => {
   it("filters spells by school E (Evocation)", () => {
     const results = searchSpells(idx, { school: "E" });
     expect(results.length).toBe(4);
-    expect(results.map(r => r.name).sort()).toEqual([
+    expect(results.map((r) => r.name).sort()).toEqual([
       "Eldritch Blast",
       "Fireball",
       "Light",
-      "Magic Missile"
+      "Magic Missile",
     ]);
   });
 
@@ -422,31 +422,31 @@ describe("search_spells", () => {
   it("filters spells by classes array - Wizard", () => {
     const results = searchSpells(idx, { classes: ["Wizard"] });
     expect(results.length).toBe(5);
-    expect(results.map(r => r.name).sort()).toEqual([
+    expect(results.map((r) => r.name).sort()).toEqual([
       "Fireball",
       "Light",
       "Magic Missile",
       "Shield",
-      "Wish"
+      "Wish",
     ]);
   });
 
   it("filters spells by classes array - Cleric", () => {
     const results = searchSpells(idx, { classes: ["Cleric"] });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Cure Wounds", "Light"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Cure Wounds", "Light"]);
   });
 
   it("filters spells by classes array - Sorcerer", () => {
     const results = searchSpells(idx, { classes: ["Sorcerer"] });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Fireball", "Shield"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Fireball", "Shield"]);
   });
 
   it("filters spells by source PHB", () => {
     const results = searchSpells(idx, { source: "PHB" });
     expect(results.length).toBe(6);
-    expect(results.find(r => r.name === "Eldritch Blast")).toBeUndefined();
+    expect(results.find((r) => r.name === "Eldritch Blast")).toBeUndefined();
   });
 
   it("filters spells by source XPHB (2024 ruleset)", () => {
@@ -458,7 +458,7 @@ describe("search_spells", () => {
   it("filters spells by ruleset 2014", () => {
     const results = searchSpells(idx, { ruleset: "2014" });
     expect(results.length).toBe(6);
-    expect(results.find(r => r.name === "Eldritch Blast")).toBeUndefined();
+    expect(results.find((r) => r.name === "Eldritch Blast")).toBeUndefined();
   });
 
   it("filters spells by ruleset 2024", () => {
@@ -482,7 +482,7 @@ describe("search_spells", () => {
   it("combines multiple filters - level 1, classes Wizard", () => {
     const results = searchSpells(idx, { level: 1, classes: ["Wizard"] });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Magic Missile", "Shield"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Magic Missile", "Shield"]);
   });
 
   it("returns empty results when no matches", () => {
@@ -524,7 +524,7 @@ describe("search_monsters", () => {
   it("filters by fractional CR 0.25", () => {
     const results = searchMonsters(idx, { cr_min: 0.25, cr_max: 0.25 });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Goblin", "Skeleton"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Goblin", "Skeleton"]);
   });
 
   it("filters by fractional CR 0.5", () => {
@@ -535,54 +535,54 @@ describe("search_monsters", () => {
   it("filters by CR range - cr_min only", () => {
     const results = searchMonsters(idx, { cr_min: 10 });
     expect(results.length).toBe(4);
-    expect(results.map(r => r.name).sort()).toEqual([
+    expect(results.map((r) => r.name).sort()).toEqual([
       "Ancient Red Dragon",
       "Tarrasque",
       "Vampire",
-      "Young Red Dragon"
+      "Young Red Dragon",
     ]);
   });
 
   it("filters by CR range - cr_max only", () => {
     const results = searchMonsters(idx, { cr_max: 1 });
     expect(results.length).toBe(5);
-    expect(results.map(r => r.name).sort()).toEqual([
+    expect(results.map((r) => r.name).sort()).toEqual([
       "Commoner",
       "Giant Spider",
       "Goblin",
       "Skeleton",
-      "Sprite"
+      "Sprite",
     ]);
   });
 
   it("filters by CR range - both cr_min and cr_max", () => {
     const results = searchMonsters(idx, { cr_min: 10, cr_max: 20 });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Vampire", "Young Red Dragon"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Vampire", "Young Red Dragon"]);
   });
 
   it("filters by CR range edge case - fractional boundaries", () => {
     const results = searchMonsters(idx, { cr_min: 0.1, cr_max: 0.3 });
     expect(results.length).toBe(3);
-    expect(results.map(r => r.name).sort()).toEqual(["Goblin", "Skeleton", "Sprite"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Goblin", "Skeleton", "Sprite"]);
   });
 
   it("filters by type - dragon", () => {
     const results = searchMonsters(idx, { type: "dragon" });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Ancient Red Dragon", "Young Red Dragon"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Ancient Red Dragon", "Young Red Dragon"]);
   });
 
   it("filters by type - undead", () => {
     const results = searchMonsters(idx, { type: "undead" });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Skeleton", "Vampire"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Skeleton", "Vampire"]);
   });
 
   it("filters by type - humanoid", () => {
     const results = searchMonsters(idx, { type: "humanoid" });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Commoner", "Goblin"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Commoner", "Goblin"]);
   });
 
   it("filters by type - beast", () => {
@@ -594,7 +594,7 @@ describe("search_monsters", () => {
   it("filters by source MM", () => {
     const results = searchMonsters(idx, { source: "MM" });
     expect(results.length).toBe(8);
-    expect(results.find(r => r.name === "Young Red Dragon")).toBeUndefined();
+    expect(results.find((r) => r.name === "Young Red Dragon")).toBeUndefined();
   });
 
   it("filters by source XMM (2024 ruleset)", () => {
@@ -606,7 +606,7 @@ describe("search_monsters", () => {
   it("filters by ruleset 2014", () => {
     const results = searchMonsters(idx, { ruleset: "2014" });
     expect(results.length).toBe(8);
-    expect(results.find(r => r.name === "Young Red Dragon")).toBeUndefined();
+    expect(results.find((r) => r.name === "Young Red Dragon")).toBeUndefined();
   });
 
   it("filters by ruleset 2024", () => {
@@ -625,19 +625,19 @@ describe("search_monsters", () => {
     // Limit to 2 to get just the dragons
     const limited = searchMonsters(idx, { name: "dragon", limit: 2 });
     expect(limited.length).toBe(2);
-    expect(limited.map(r => r.name).sort()).toEqual(["Ancient Red Dragon", "Young Red Dragon"]);
+    expect(limited.map((r) => r.name).sort()).toEqual(["Ancient Red Dragon", "Young Red Dragon"]);
   });
 
   it("combines multiple filters - CR range and type", () => {
     const results = searchMonsters(idx, { cr_min: 10, type: "dragon" });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Ancient Red Dragon", "Young Red Dragon"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Ancient Red Dragon", "Young Red Dragon"]);
   });
 
   it("combines multiple filters - CR max and type", () => {
     const results = searchMonsters(idx, { cr_max: 1, type: "humanoid" });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Commoner", "Goblin"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Commoner", "Goblin"]);
   });
 
   it("returns empty results when no matches", () => {
@@ -648,7 +648,7 @@ describe("search_monsters", () => {
   it("handles high CR monsters correctly", () => {
     const results = searchMonsters(idx, { cr_min: 20 });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Ancient Red Dragon", "Tarrasque"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Ancient Red Dragon", "Tarrasque"]);
   });
 });
 
@@ -674,10 +674,10 @@ describe("search_items", () => {
   it("filters by rarity - uncommon", () => {
     const results = searchItems(idx, { rarity: "uncommon" });
     expect(results.length).toBe(3);
-    expect(results.map(r => r.name).sort()).toEqual([
+    expect(results.map((r) => r.name).sort()).toEqual([
       "+1 Longsword",
       "Bag of Holding",
-      "Cloak of Protection"
+      "Cloak of Protection",
     ]);
   });
 
@@ -696,7 +696,7 @@ describe("search_items", () => {
   it("filters by rarity - legendary", () => {
     const results = searchItems(idx, { rarity: "legendary" });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Holy Avenger", "Ring of Wishes"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Holy Avenger", "Ring of Wishes"]);
   });
 
   it("filters by rarity - artifact", () => {
@@ -708,45 +708,45 @@ describe("search_items", () => {
   it("filters by attunement - true", () => {
     const results = searchItems(idx, { attunement: true });
     expect(results.length).toBe(5);
-    expect(results.map(r => r.name).sort()).toEqual([
+    expect(results.map((r) => r.name).sort()).toEqual([
       "Cloak of Protection",
       "Flame Tongue",
       "Holy Avenger",
       "Ring of Wishes",
-      "Staff of Power"
+      "Staff of Power",
     ]);
   });
 
   it("filters by attunement - false", () => {
     const results = searchItems(idx, { attunement: false });
     expect(results.length).toBe(5);
-    expect(results.map(r => r.name).sort()).toEqual([
+    expect(results.map((r) => r.name).sort()).toEqual([
       "+1 Longsword",
       "Bag of Holding",
       "Deck of Many Things",
       "Healing Potion",
-      "Longsword"
+      "Longsword",
     ]);
   });
 
   it("filters by type - weapon", () => {
     const results = searchItems(idx, { type: "weapon" });
     expect(results.length).toBe(4);
-    expect(results.map(r => r.name).sort()).toEqual([
+    expect(results.map((r) => r.name).sort()).toEqual([
       "+1 Longsword",
       "Flame Tongue",
       "Holy Avenger",
-      "Longsword"
+      "Longsword",
     ]);
   });
 
   it("filters by type - wondrous item", () => {
     const results = searchItems(idx, { type: "wondrous item" });
     expect(results.length).toBe(3);
-    expect(results.map(r => r.name).sort()).toEqual([
+    expect(results.map((r) => r.name).sort()).toEqual([
       "Bag of Holding",
       "Cloak of Protection",
-      "Deck of Many Things"
+      "Deck of Many Things",
     ]);
   });
 
@@ -771,7 +771,7 @@ describe("search_items", () => {
   it("filters by source DMG", () => {
     const results = searchItems(idx, { source: "DMG" });
     expect(results.length).toBe(9);
-    expect(results.find(r => r.name === "Staff of Power")).toBeUndefined();
+    expect(results.find((r) => r.name === "Staff of Power")).toBeUndefined();
   });
 
   it("filters by source XDMG (2024 ruleset)", () => {
@@ -783,7 +783,7 @@ describe("search_items", () => {
   it("filters by ruleset 2014", () => {
     const results = searchItems(idx, { ruleset: "2014" });
     expect(results.length).toBe(9);
-    expect(results.find(r => r.name === "Staff of Power")).toBeUndefined();
+    expect(results.find((r) => r.name === "Staff of Power")).toBeUndefined();
   });
 
   it("filters by ruleset 2024", () => {
@@ -801,13 +801,13 @@ describe("search_items", () => {
     // Limit to 2 to get just the swords
     const limited = searchItems(idx, { name: "sword", limit: 2 });
     expect(limited.length).toBe(2);
-    expect(limited.map(r => r.name).sort()).toEqual(["+1 Longsword", "Longsword"]);
+    expect(limited.map((r) => r.name).sort()).toEqual(["+1 Longsword", "Longsword"]);
   });
 
   it("combines multiple filters - rarity and attunement", () => {
     const results = searchItems(idx, { rarity: "legendary", attunement: true });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Holy Avenger", "Ring of Wishes"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Holy Avenger", "Ring of Wishes"]);
   });
 
   it("combines multiple filters - rarity and type", () => {
@@ -819,7 +819,7 @@ describe("search_items", () => {
   it("combines multiple filters - attunement and type", () => {
     const results = searchItems(idx, { attunement: true, type: "weapon" });
     expect(results.length).toBe(2);
-    expect(results.map(r => r.name).sort()).toEqual(["Flame Tongue", "Holy Avenger"]);
+    expect(results.map((r) => r.name).sort()).toEqual(["Flame Tongue", "Holy Avenger"]);
   });
 
   it("returns empty results when no matches", () => {
@@ -830,5 +830,78 @@ describe("search_items", () => {
   it("respects limit parameter", () => {
     const results = searchItems(idx, { limit: 3 });
     expect(results.length).toBe(3);
+  });
+});
+
+// ── Homebrew preference tie-breaking ─────────────────────────────
+
+describe("fuzzyScore — homebrew tie-breaking", () => {
+  function makeRec(name: string, homebrew?: boolean): RecordLite {
+    return {
+      uri: `fiveet://entity/spell/TEST/${name.toLowerCase().replace(/\s+/g, "-")}`,
+      name,
+      slug: name.toLowerCase().replace(/\s+/g, "-"),
+      source: homebrew ? "HB_Custom" : "PHB",
+      ruleset: "2014",
+      facets: {},
+      kind: "spell",
+      homebrew,
+    };
+  }
+
+  it("gives homebrew records a small score bonus", () => {
+    const official = makeRec("Fireball", false);
+    const homebrew = makeRec("Fireball", true);
+    const offScore = fuzzyScore("fireball", official);
+    const brewScore = fuzzyScore("fireball", homebrew);
+    expect(brewScore).toBeGreaterThan(offScore);
+  });
+
+  it("homebrew bonus is small enough not to override better text match", () => {
+    const officialExact = makeRec("Fireball", false);
+    const homebrewPartial = makeRec("Firestorm", true);
+    const exactScore = fuzzyScore("fireball", officialExact);
+    const partialScore = fuzzyScore("fireball", homebrewPartial);
+    // Exact match (100) should still beat partial homebrew match
+    expect(exactScore).toBeGreaterThan(partialScore);
+  });
+
+  it("homebrew wins when text scores are otherwise equal", () => {
+    const official = makeRec("Shield", false);
+    const homebrew = makeRec("Shield", true);
+    const offScore = fuzzyScore("shield", official);
+    const brewScore = fuzzyScore("shield", homebrew);
+    expect(brewScore - offScore).toBe(2);
+  });
+});
+
+describe("searchSpells — homebrew preference in results", () => {
+  it("ranks homebrew spell above official when names match", () => {
+    const idx: SearchIndex = { byKind: new Map(), byUri: new Map() };
+    const spells: RecordLite[] = [
+      {
+        uri: "fiveet://entity/spell/PHB/shield",
+        name: "Shield",
+        slug: "shield",
+        source: "PHB",
+        ruleset: "2014",
+        facets: { level: 1, school: "A", classes: ["wizard"] },
+        kind: "spell",
+      },
+      {
+        uri: "fiveet://entity/spell/HB/shield",
+        name: "Shield",
+        slug: "shield",
+        source: "HB",
+        ruleset: "2014",
+        facets: { level: 1, school: "A", classes: ["wizard"] },
+        kind: "spell",
+        homebrew: true,
+      },
+    ];
+    idx.byKind.set("spell", spells);
+
+    const results = searchSpells(idx, { name: "Shield", limit: 2 });
+    expect(results[0].source).toBe("HB");
   });
 });

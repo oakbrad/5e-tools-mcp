@@ -6,7 +6,6 @@ import {
   generateTreasure,
   generateIndividualTreasure,
   generateHoardTreasure,
-  type TreasureHoard,
 } from "../src/treasure";
 
 describe("Treasure Generation", () => {
@@ -336,7 +335,7 @@ describe("Treasure Generation", () => {
 
     test("respects magic_item_preference parameter", () => {
       const none = generateTreasure({ hoard_tier: "tier1", magic_item_preference: "none" });
-      const many = generateTreasure({ hoard_tier: "tier1", magic_item_preference: "many" });
+      const _many = generateTreasure({ hoard_tier: "tier1", magic_item_preference: "many" });
 
       expect(none.magicItems).toHaveLength(0);
       // 'many' should sometimes generate items
@@ -392,8 +391,13 @@ describe("Treasure Generation", () => {
     });
 
     test("handles all hoard tiers", () => {
-      const tiers: Array<"tier1" | "tier2" | "tier3" | "tier4"> = ["tier1", "tier2", "tier3", "tier4"];
-      tiers.forEach(tier => {
+      const tiers: Array<"tier1" | "tier2" | "tier3" | "tier4"> = [
+        "tier1",
+        "tier2",
+        "tier3",
+        "tier4",
+      ];
+      tiers.forEach((tier) => {
         const treasure = generateHoardTreasure(tier);
         expect(treasure.tier).toBe(tier);
         expect(treasure.hoardType).toBe("hoard");
@@ -402,7 +406,7 @@ describe("Treasure Generation", () => {
 
     test("handles all magic_item_preferences", () => {
       const preferences: Array<"none" | "few" | "many"> = ["none", "few", "many"];
-      preferences.forEach(pref => {
+      preferences.forEach((pref) => {
         const treasure = generateHoardTreasure("tier1", pref);
         expect(treasure.hoardType).toBe("hoard");
         if (pref === "none") {
@@ -413,10 +417,10 @@ describe("Treasure Generation", () => {
 
     test("generates multiple treasures without errors", () => {
       const treasures = Array.from({ length: 100 }, () =>
-        generateTreasure({ hoard_tier: "tier2" })
+        generateTreasure({ hoard_tier: "tier2" }),
       );
       expect(treasures).toHaveLength(100);
-      treasures.forEach(t => {
+      treasures.forEach((t) => {
         expect(t.coins).toBeDefined();
         expect(t.totalValueGP).toBeGreaterThanOrEqual(0);
       });
@@ -426,7 +430,7 @@ describe("Treasure Generation", () => {
   describe("Statistical Properties", () => {
     test("individual treasure values increase with CR", () => {
       const crs = [1, 5, 10, 15, 20];
-      const values = crs.map(cr => {
+      const values = crs.map((cr) => {
         let total = 0;
         const samples = 10;
         for (let i = 0; i < samples; i++) {
@@ -443,8 +447,13 @@ describe("Treasure Generation", () => {
     });
 
     test("hoard treasure values vary significantly by tier", () => {
-      const tiers: Array<"tier1" | "tier2" | "tier3" | "tier4"> = ["tier1", "tier2", "tier3", "tier4"];
-      const values = tiers.map(tier => {
+      const tiers: Array<"tier1" | "tier2" | "tier3" | "tier4"> = [
+        "tier1",
+        "tier2",
+        "tier3",
+        "tier4",
+      ];
+      const values = tiers.map((tier) => {
         let total = 0;
         const samples = 20;
         for (let i = 0; i < samples; i++) {
@@ -454,13 +463,40 @@ describe("Treasure Generation", () => {
       });
 
       // All tiers should generate some value
-      values.forEach(value => {
+      values.forEach((value) => {
         expect(value).toBeGreaterThan(0);
       });
 
       // Tier 4 should generally have the highest average (though with randomness it might not always)
       // Just verify they all generate successfully with reasonable ranges
       expect(values[3]).toBeGreaterThan(values[0] * 0.1); // At least 10% of tier 1 value
+    });
+  });
+
+  // ── Bug A regression: individual treasure must be random per call ──
+  describe("individual treasure randomness", () => {
+    test("multiple calls for the same CR produce different coin amounts", () => {
+      // Roll 20 times for CR 5 — with 20d6 cp, the odds of all 20 being
+      // identical are astronomically small (would only happen if dice are
+      // rolled at import time instead of call time)
+      const results = Array.from({ length: 20 }, () => generateIndividualTreasure(5));
+      const cpValues = results.map((r) => r.coins.cp);
+      const uniqueCp = new Set(cpValues);
+      expect(uniqueCp.size).toBeGreaterThan(1);
+    });
+
+    test("CR 0 always returns zero coins", () => {
+      const result = generateIndividualTreasure(0);
+      expect(result.coins).toEqual({ cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 });
+    });
+
+    test("different CRs produce different expected value ranges", () => {
+      // Average of 10 rolls for CR 1 vs CR 20 — CR 20 should be higher
+      const avg = (cr: number) => {
+        const runs = Array.from({ length: 10 }, () => generateIndividualTreasure(cr));
+        return runs.reduce((s, r) => s + r.totalValueGP, 0) / runs.length;
+      };
+      expect(avg(20)).toBeGreaterThan(avg(1));
     });
   });
 });

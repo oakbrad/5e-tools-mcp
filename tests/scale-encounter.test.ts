@@ -84,7 +84,7 @@ describe("scaleEncounter", () => {
       const result = scaleEncounter(input);
 
       expect(result.scaled.adjustedXP).toBeLessThan(result.original.adjustedXP);
-      expect(result.rationale.some(r => r.includes("easier"))).toBe(true);
+      expect(result.rationale.some((r) => r.includes("easier"))).toBe(true);
     });
 
     test("makes encounter harder", () => {
@@ -99,7 +99,7 @@ describe("scaleEncounter", () => {
       const result = scaleEncounter(input);
 
       expect(result.scaled.adjustedXP).toBeGreaterThan(result.original.adjustedXP);
-      expect(result.rationale.some(r => r.includes("harder"))).toBe(true);
+      expect(result.rationale.some((r) => r.includes("harder"))).toBe(true);
     });
 
     test("throws error when both target_difficulty and adjustment specified", () => {
@@ -110,7 +110,9 @@ describe("scaleEncounter", () => {
         adjustment: "easier",
       };
 
-      expect(() => scaleEncounter(input)).toThrow("Cannot specify both target_difficulty and adjustment");
+      expect(() => scaleEncounter(input)).toThrow(
+        "Cannot specify both target_difficulty and adjustment",
+      );
     });
   });
 
@@ -128,7 +130,7 @@ describe("scaleEncounter", () => {
       const result = scaleEncounter(input);
 
       expect(result.original.partyThresholds.partySize).toBe(4);
-      expect(result.rationale.some(r => r.includes("Party size changed"))).toBe(true);
+      expect(result.rationale.some((r) => r.includes("Party size changed"))).toBe(true);
     });
 
     test("scales encounter for smaller party", () => {
@@ -144,7 +146,7 @@ describe("scaleEncounter", () => {
       const result = scaleEncounter(input);
 
       expect(result.original.partyThresholds.partySize).toBe(6);
-      expect(result.rationale.some(r => r.includes("Party size changed"))).toBe(true);
+      expect(result.rationale.some((r) => r.includes("Party size changed"))).toBe(true);
     });
 
     test("handles party level changes", () => {
@@ -161,16 +163,18 @@ describe("scaleEncounter", () => {
 
       // Higher level party should get more monsters/higher CR
       expect(result.scaled.totalBaseXP).toBeGreaterThan(0);
-      expect(result.rationale.some(r => r.includes("Party size changed") || r.includes("Target difficulty"))).toBe(true);
+      expect(
+        result.rationale.some(
+          (r) => r.includes("Party size changed") || r.includes("Target difficulty"),
+        ),
+      ).toBe(true);
     });
   });
 
   describe("scaling strategies", () => {
     test("uses count scaling when appropriate", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: 1, count: 5 },
-        ],
+        current_encounter: [{ cr: 1, count: 5 }],
         current_party: [5, 5, 5, 5],
         target_difficulty: "hard",
       };
@@ -182,9 +186,7 @@ describe("scaleEncounter", () => {
 
     test("uses CR swapping when appropriate", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: 1, count: 1 },
-        ],
+        current_encounter: [{ cr: 1, count: 1 }],
         current_party: [5, 5, 5, 5],
         target_difficulty: "deadly",
       };
@@ -230,9 +232,7 @@ describe("scaleEncounter", () => {
 
     test("handles very high CR monsters", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: 20, count: 1 },
-        ],
+        current_encounter: [{ cr: 20, count: 1 }],
         current_party: [20, 20, 20, 20],
         target_difficulty: "easy",
       };
@@ -252,7 +252,9 @@ describe("scaleEncounter", () => {
         target_difficulty: "medium",
       };
 
-      expect(() => scaleEncounter(input)).toThrow("current_encounter must contain at least one monster");
+      expect(() => scaleEncounter(input)).toThrow(
+        "current_encounter must contain at least one monster",
+      );
     });
 
     test("throws error for empty party", () => {
@@ -262,14 +264,14 @@ describe("scaleEncounter", () => {
         target_difficulty: "medium",
       };
 
-      expect(() => scaleEncounter(input)).toThrow("current_party must contain at least one character level");
+      expect(() => scaleEncounter(input)).toThrow(
+        "current_party must contain at least one character level",
+      );
     });
 
     test("handles trivial to trivial scaling", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: "1/8", count: 1 },
-        ],
+        current_encounter: [{ cr: "1/8", count: 1 }],
         current_party: [5, 5, 5, 5],
         adjustment: "easier",
       };
@@ -282,9 +284,7 @@ describe("scaleEncounter", () => {
 
     test("handles deadly to deadly scaling", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: 20, count: 4 },
-        ],
+        current_encounter: [{ cr: 20, count: 4 }],
         current_party: [20, 20, 20, 20],
         adjustment: "harder",
       };
@@ -297,9 +297,7 @@ describe("scaleEncounter", () => {
 
     test("preserves encounter with default target_party", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: 1, count: 1 },
-        ],
+        current_encounter: [{ cr: 1, count: 1 }],
         current_party: [3, 3, 3, 3],
         target_difficulty: "hard",
       };
@@ -315,9 +313,7 @@ describe("scaleEncounter", () => {
   describe("result structure", () => {
     test("returns complete result with all fields", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: 3, count: 2 },
-        ],
+        current_encounter: [{ cr: 3, count: 2 }],
         current_party: [5, 5, 5, 5],
         target_difficulty: "medium",
       };
@@ -346,9 +342,7 @@ describe("scaleEncounter", () => {
 
     test("rationale includes meaningful information", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: 2, count: 4 },
-        ],
+        current_encounter: [{ cr: 2, count: 4 }],
         current_party: [5, 5, 5, 5],
         target_difficulty: "hard",
       };
@@ -356,9 +350,11 @@ describe("scaleEncounter", () => {
       const result = scaleEncounter(input);
 
       expect(result.rationale.length).toBeGreaterThan(3);
-      expect(result.rationale.some(r => r.includes("difficulty"))).toBe(true);
-      expect(result.rationale.some(r => r.includes("XP"))).toBe(true);
-      expect(result.rationale.some(r => r.includes("strategy") || r.includes("Strategy"))).toBe(true);
+      expect(result.rationale.some((r) => r.includes("difficulty"))).toBe(true);
+      expect(result.rationale.some((r) => r.includes("XP"))).toBe(true);
+      expect(result.rationale.some((r) => r.includes("strategy") || r.includes("Strategy"))).toBe(
+        true,
+      );
     });
   });
 
@@ -366,8 +362,8 @@ describe("scaleEncounter", () => {
     test("attempts to maintain monster count ratios", () => {
       const input: ScaleEncounterInput = {
         current_encounter: [
-          { cr: 3, count: 2 },  // 66.7% of monsters
-          { cr: 1, count: 1 },  // 33.3% of monsters
+          { cr: 3, count: 2 }, // 66.7% of monsters
+          { cr: 1, count: 1 }, // 33.3% of monsters
         ],
         current_party: [5, 5, 5, 5],
         target_difficulty: "hard",
@@ -381,9 +377,7 @@ describe("scaleEncounter", () => {
 
     test("handles single monster encounters", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: 5, count: 1 },
-        ],
+        current_encounter: [{ cr: 5, count: 1 }],
         current_party: [5, 5, 5, 5],
         target_difficulty: "medium",
       };
@@ -397,9 +391,7 @@ describe("scaleEncounter", () => {
 
     test("handles large monster groups", () => {
       const input: ScaleEncounterInput = {
-        current_encounter: [
-          { cr: 1, count: 10 },
-        ],
+        current_encounter: [{ cr: 1, count: 10 }],
         current_party: [5, 5, 5, 5],
         target_difficulty: "hard",
       };

@@ -4,7 +4,10 @@
 import { searchMonsters, type SearchIndex } from "./search.js";
 
 /** XP Thresholds by Character Level (DMG p.82) */
-const XP_THRESHOLDS: Record<number, { easy: number; medium: number; hard: number; deadly: number }> = {
+const XP_THRESHOLDS: Record<
+  number,
+  { easy: number; medium: number; hard: number; deadly: number }
+> = {
   1: { easy: 25, medium: 50, hard: 75, deadly: 100 },
   2: { easy: 50, medium: 100, hard: 150, deadly: 200 },
   3: { easy: 75, medium: 150, hard: 225, deadly: 400 },
@@ -29,14 +32,30 @@ const XP_THRESHOLDS: Record<number, { easy: number; medium: number; hard: number
 
 /** Daily XP Budget per Character (DMG p.84) */
 const DAILY_XP: Record<number, number> = {
-  1: 300, 2: 600, 3: 1200, 4: 1700, 5: 3500,
-  6: 4000, 7: 5000, 8: 6000, 9: 7500, 10: 9000,
-  11: 10500, 12: 11500, 13: 13500, 14: 15000, 15: 18000,
-  16: 20000, 17: 25000, 18: 27000, 19: 30000, 20: 40000,
+  1: 300,
+  2: 600,
+  3: 1200,
+  4: 1700,
+  5: 3500,
+  6: 4000,
+  7: 5000,
+  8: 6000,
+  9: 7500,
+  10: 9000,
+  11: 10500,
+  12: 11500,
+  13: 13500,
+  14: 15000,
+  15: 18000,
+  16: 20000,
+  17: 25000,
+  18: 27000,
+  19: 30000,
+  20: 40000,
 };
 
 /** CR to XP mapping (DMG p.274-282 + Monster Manual) */
-const CR_TO_XP: Record<string, number> = {
+export const CR_TO_XP: Record<string, number> = {
   "0": 0,
   "1/8": 25,
   "1/4": 50,
@@ -74,7 +93,7 @@ const CR_TO_XP: Record<string, number> = {
 };
 
 /** Encounter multiplier table (DMG p.82) */
-const ENCOUNTER_MULTIPLIERS: Array<{ min: number; max: number; multiplier: number }> = [
+export const ENCOUNTER_MULTIPLIERS: Array<{ min: number; max: number; multiplier: number }> = [
   { min: 1, max: 1, multiplier: 1 },
   { min: 2, max: 2, multiplier: 1.5 },
   { min: 3, max: 6, multiplier: 2 },
@@ -148,21 +167,19 @@ export function getXPForCR(cr: number | string): number {
  */
 export function getEncounterMultiplier(monsterCount: number, partySize: number): number {
   // Find base multiplier
-  const entry = ENCOUNTER_MULTIPLIERS.find(
-    (e) => monsterCount >= e.min && monsterCount <= e.max
-  );
+  const entry = ENCOUNTER_MULTIPLIERS.find((e) => monsterCount >= e.min && monsterCount <= e.max);
   let multiplier = entry?.multiplier ?? 4;
 
   // Adjust for party size
   if (partySize < 3) {
     // Small party: use next highest multiplier
-    const currentIndex = ENCOUNTER_MULTIPLIERS.findIndex(e => e.multiplier === multiplier);
+    const currentIndex = ENCOUNTER_MULTIPLIERS.findIndex((e) => e.multiplier === multiplier);
     if (currentIndex >= 0 && currentIndex < ENCOUNTER_MULTIPLIERS.length - 1) {
       multiplier = ENCOUNTER_MULTIPLIERS[currentIndex + 1].multiplier;
     }
   } else if (partySize >= 6) {
     // Large party: use next lowest multiplier
-    const currentIndex = ENCOUNTER_MULTIPLIERS.findIndex(e => e.multiplier === multiplier);
+    const currentIndex = ENCOUNTER_MULTIPLIERS.findIndex((e) => e.multiplier === multiplier);
     if (currentIndex > 0) {
       multiplier = ENCOUNTER_MULTIPLIERS[currentIndex - 1].multiplier;
     }
@@ -217,10 +234,7 @@ export function getDifficulty(adjustedXP: number, thresholds: PartyThresholds): 
 /**
  * Evaluate an encounter's difficulty
  */
-export function evaluateEncounter(
-  party: number[],
-  monsters: MonsterEntry[]
-): EncounterEvaluation {
+export function evaluateEncounter(party: number[], monsters: MonsterEntry[]): EncounterEvaluation {
   const partyThresholds = calculatePartyThresholds(party);
 
   // Calculate total base XP and monster count
@@ -267,10 +281,10 @@ export function suggestEncounters(
     availableCRs?: string[];
     searchIndex?: SearchIndex;
     ruleset?: "2014" | "2024" | "any";
-  } = {}
+  } = {},
 ): EncounterSuggestion[] {
   const partyThresholds = calculatePartyThresholds(party);
-  
+
   // Determine target XP range
   const difficultyMap: Record<string, { min: number; max: number }> = {
     easy: { min: partyThresholds.easy, max: partyThresholds.medium - 1 },
@@ -278,43 +292,43 @@ export function suggestEncounters(
     hard: { min: partyThresholds.hard, max: partyThresholds.deadly - 1 },
     deadly: { min: partyThresholds.deadly, max: partyThresholds.deadly * 1.5 },
   };
-  
+
   const targetRange = difficultyMap[difficulty];
-  
+
   // Default monster count: 1 per 4 PCs
   const defaultMonsterCount = Math.max(1, Math.ceil(party.length / 4));
   const monsterCount = options.monsterCount ?? defaultMonsterCount;
-  
+
   // Get available CRs
   const allCRs = Object.keys(CR_TO_XP);
   let availableCRs = options.availableCRs ?? allCRs;
-  
+
   // Filter by CR range if specified
   if (options.crMin !== undefined || options.crMax !== undefined) {
-    availableCRs = availableCRs.filter(cr => {
+    availableCRs = availableCRs.filter((cr) => {
       const xp = getXPForCR(cr);
       if (options.crMin !== undefined && xp < options.crMin) return false;
       if (options.crMax !== undefined && xp > options.crMax) return false;
       return true;
     });
   }
-  
+
   const suggestions: EncounterSuggestion[] = [];
   const multiplier = getEncounterMultiplier(monsterCount, partyThresholds.partySize);
-  
+
   // Calculate target base XP (before multiplier)
   const targetBaseXPMin = Math.floor(targetRange.min / multiplier);
   const targetBaseXPMax = Math.ceil(targetRange.max / multiplier);
-  
+
   // Strategy 1: All same CR
   for (const cr of availableCRs) {
     const xpPerMonster = getXPForCR(cr);
     const totalBaseXP = xpPerMonster * monsterCount;
-    
+
     if (totalBaseXP >= targetBaseXPMin && totalBaseXP <= targetBaseXPMax) {
       const adjustedXP = Math.round(totalBaseXP * multiplier);
       const actualDifficulty = getDifficulty(adjustedXP, partyThresholds);
-      
+
       suggestions.push({
         monsters: [{ cr, count: monsterCount }],
         totalBaseXP,
@@ -323,7 +337,7 @@ export function suggestEncounters(
       });
     }
   }
-  
+
   // Strategy 2: Mix of CRs (if monster count > 1)
   if (monsterCount > 1 && availableCRs.length > 1) {
     // Try combinations of 2-3 different CRs
@@ -333,23 +347,24 @@ export function suggestEncounters(
         const cr2 = availableCRs[j];
         const xp1 = getXPForCR(cr1);
         const xp2 = getXPForCR(cr2);
-        
+
         // Try different distributions
         for (let count1 = 1; count1 < monsterCount; count1++) {
           const count2 = monsterCount - count1;
           const totalBaseXP = xp1 * count1 + xp2 * count2;
-          
+
           if (totalBaseXP >= targetBaseXPMin && totalBaseXP <= targetBaseXPMax) {
             const adjustedXP = Math.round(totalBaseXP * multiplier);
             const actualDifficulty = getDifficulty(adjustedXP, partyThresholds);
-            
-            const monsters = cr1 === cr2
-              ? [{ cr: cr1, count: monsterCount }]
-              : [
-                  { cr: cr1, count: count1 },
-                  { cr: cr2, count: count2 },
-                ].filter(m => m.count > 0);
-            
+
+            const monsters =
+              cr1 === cr2
+                ? [{ cr: cr1, count: monsterCount }]
+                : [
+                    { cr: cr1, count: count1 },
+                    { cr: cr2, count: count2 },
+                  ].filter((m) => m.count > 0);
+
             suggestions.push({
               monsters,
               totalBaseXP,
@@ -361,51 +376,60 @@ export function suggestEncounters(
       }
     }
   }
-  
+
   // Remove duplicates and sort by how close to target difficulty
   const unique = suggestions.filter((s, i, arr) => {
-    const key = JSON.stringify(s.monsters.map(m => ({ cr: m.cr, count: m.count })));
-    return i === arr.findIndex(x => JSON.stringify(x.monsters.map(m => ({ cr: m.cr, count: m.count }))) === key);
+    const key = JSON.stringify(s.monsters.map((m) => ({ cr: m.cr, count: m.count })));
+    return (
+      i ===
+      arr.findIndex(
+        (x) => JSON.stringify(x.monsters.map((m) => ({ cr: m.cr, count: m.count }))) === key,
+      )
+    );
   });
-  
+
   // Sort by adjusted XP (closest to middle of range first)
   const targetMid = (targetRange.min + targetRange.max) / 2;
   unique.sort((a, b) => Math.abs(a.adjustedXP - targetMid) - Math.abs(b.adjustedXP - targetMid));
-  
+
   const topSuggestions = unique.slice(0, 10);
-  
+
   // Populate monster names if search index provided
   if (options.searchIndex) {
     const ruleset = options.ruleset ?? "any";
-    
+
     for (const suggestion of topSuggestions) {
       for (const monster of suggestion.monsters) {
         // Convert CR string to numeric for search (e.g., "1/4" → 0.25)
         const crNumeric = parseCRToNumber(monster.cr);
-        
+
         // Search for monsters at this exact CR
         const candidates = searchMonsters(options.searchIndex, {
           cr_min: crNumeric,
           cr_max: crNumeric,
           ruleset,
-          limit: 5
+          limit: 5,
         });
-        
+
         // Pick a random monster from the top results, or list first 3
         if (candidates.length > 0) {
           if (candidates.length === 1) {
             monster.name = candidates[0].name;
           } else if (candidates.length <= 3) {
-            monster.name = candidates.map(c => c.name).join(" / ");
+            monster.name = candidates.map((c) => c.name).join(" / ");
           } else {
             // Show first 3 options
-            monster.name = candidates.slice(0, 3).map(c => c.name).join(" / ") + "...";
+            monster.name =
+              candidates
+                .slice(0, 3)
+                .map((c) => c.name)
+                .join(" / ") + "...";
           }
         }
       }
     }
   }
-  
+
   return topSuggestions;
 }
 

@@ -72,15 +72,15 @@ describe("Encounter Builder", () => {
     test("increases multiplier for small parties (< 3 PCs)", () => {
       // Small party uses next highest multiplier
       expect(getEncounterMultiplier(1, 2)).toBe(1.5); // normally 1, increased to 1.5
-      expect(getEncounterMultiplier(2, 2)).toBe(2);   // normally 1.5, increased to 2
+      expect(getEncounterMultiplier(2, 2)).toBe(2); // normally 1.5, increased to 2
       expect(getEncounterMultiplier(3, 2)).toBe(2.5); // normally 2, increased to 2.5
     });
 
     test("decreases multiplier for large parties (6+ PCs)", () => {
       // Large party uses next lowest multiplier
-      expect(getEncounterMultiplier(2, 6)).toBe(1);   // normally 1.5, decreased to 1
+      expect(getEncounterMultiplier(2, 6)).toBe(1); // normally 1.5, decreased to 1
       expect(getEncounterMultiplier(3, 6)).toBe(1.5); // normally 2, decreased to 1.5
-      expect(getEncounterMultiplier(7, 6)).toBe(2);   // normally 2.5, decreased to 2
+      expect(getEncounterMultiplier(7, 6)).toBe(2); // normally 2.5, decreased to 2
     });
   });
 
@@ -102,9 +102,9 @@ describe("Encounter Builder", () => {
       const result = calculatePartyThresholds([3, 3, 3, 2]);
       expect(result).toEqual({
         partySize: 4,
-        easy: 275,   // 75 + 75 + 75 + 50
+        easy: 275, // 75 + 75 + 75 + 50
         medium: 550, // 150 + 150 + 150 + 100
-        hard: 825,   // 225 + 225 + 225 + 150
+        hard: 825, // 225 + 225 + 225 + 150
         deadly: 1400, // 400 + 400 + 400 + 200
         dailyBudget: 4200, // 1200 + 1200 + 1200 + 600
       });
@@ -214,8 +214,8 @@ describe("Encounter Builder", () => {
     test("evaluates encounter with mixed CRs", () => {
       const party = [10, 10, 10, 10];
       const monsters: MonsterEntry[] = [
-        { cr: 8, count: 1 },  // 3900 XP
-        { cr: 6, count: 2 },  // 2× 2300 = 4600 XP
+        { cr: 8, count: 1 }, // 3900 XP
+        { cr: 6, count: 2 }, // 2× 2300 = 4600 XP
       ];
 
       const result = evaluateEncounter(party, monsters);
@@ -255,7 +255,7 @@ describe("Encounter Builder", () => {
       const suggestions = suggestEncounters(party, "easy");
 
       expect(suggestions.length).toBeGreaterThan(0);
-      suggestions.forEach(suggestion => {
+      suggestions.forEach((suggestion) => {
         expect(suggestion.difficulty).toMatch(/^(Trivial|Easy)$/);
         expect(suggestion.adjustedXP).toBeGreaterThanOrEqual(100); // easy threshold
         expect(suggestion.adjustedXP).toBeLessThan(200); // medium threshold
@@ -267,7 +267,7 @@ describe("Encounter Builder", () => {
       const suggestions = suggestEncounters(party, "medium");
 
       expect(suggestions.length).toBeGreaterThan(0);
-      suggestions.forEach(suggestion => {
+      suggestions.forEach((suggestion) => {
         expect(suggestion.difficulty).toMatch(/^(Easy|Medium)$/);
         // Medium threshold: 2000, Hard threshold: 3000
         expect(suggestion.adjustedXP).toBeGreaterThanOrEqual(2000);
@@ -280,7 +280,7 @@ describe("Encounter Builder", () => {
       const suggestions = suggestEncounters(party, "hard");
 
       expect(suggestions.length).toBeGreaterThan(0);
-      suggestions.forEach(suggestion => {
+      suggestions.forEach((suggestion) => {
         expect(suggestion.difficulty).toMatch(/^(Medium|Hard)$/);
       });
     });
@@ -289,7 +289,7 @@ describe("Encounter Builder", () => {
       const party = [5, 5, 5, 5];
       const suggestions = suggestEncounters(party, "medium", { monsterCount: 2 });
 
-      suggestions.forEach(suggestion => {
+      suggestions.forEach((suggestion) => {
         const totalMonsters = suggestion.monsters.reduce((sum, m) => sum + m.count, 0);
         expect(totalMonsters).toBe(2);
       });
@@ -302,8 +302,8 @@ describe("Encounter Builder", () => {
         crMax: 3000, // CR 7 = 2900 XP (maximum)
       });
 
-      suggestions.forEach(suggestion => {
-        suggestion.monsters.forEach(monster => {
+      suggestions.forEach((suggestion) => {
+        suggestion.monsters.forEach((monster) => {
           const xp = getXPForCR(monster.cr);
           expect(xp).toBeGreaterThanOrEqual(1000);
           expect(xp).toBeLessThanOrEqual(3000);
@@ -316,8 +316,8 @@ describe("Encounter Builder", () => {
       const suggestions = suggestEncounters(party, "medium", { monsterCount: 3 });
 
       // Should have both same-CR and mixed-CR suggestions
-      const allSameCR = suggestions.every(s => s.monsters.length === 1);
-      const allMixedCR = suggestions.every(s => s.monsters.length > 1);
+      const allSameCR = suggestions.every((s) => s.monsters.length === 1);
+      const allMixedCR = suggestions.every((s) => s.monsters.length > 1);
 
       // At least some variety (not all same-CR and not all mixed-CR)
       expect(allSameCR || allMixedCR).toBe(false);
@@ -338,7 +338,7 @@ describe("Encounter Builder", () => {
       const suggestions = suggestEncounters(party, "medium");
 
       // Should default to 2 monsters (8 / 4 = 2)
-      const hasCorrectDefault = suggestions.some(s => {
+      const hasCorrectDefault = suggestions.some((s) => {
         const total = s.monsters.reduce((sum, m) => sum + m.count, 0);
         return total === 2;
       });

@@ -5,7 +5,6 @@ import {
   getTierRarities,
   type SearchIndex,
   type RecordLite,
-  type SuggestMagicItemsParams
 } from "../src/magic-items.js";
 
 describe("magic-items", () => {
@@ -14,7 +13,7 @@ describe("magic-items", () => {
   beforeEach(() => {
     testIndex = {
       byKind: new Map(),
-      byUri: new Map()
+      byUri: new Map(),
     };
 
     // Mock magic items with various rarities and types
@@ -26,8 +25,8 @@ describe("magic-items", () => {
         slug: "potion-of-healing",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "common", reqAttune: false },
-        kind: "item"
+        facets: { rarity: "common", reqAttune: false, type: "potion" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/DMG/ammo-arrow",
@@ -35,8 +34,8 @@ describe("magic-items", () => {
         slug: "ammo-arrow",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "common", reqAttune: false },
-        kind: "item"
+        facets: { rarity: "common", reqAttune: false, type: "weapon" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/PHB/rope",
@@ -44,8 +43,8 @@ describe("magic-items", () => {
         slug: "rope-of-climbing",
         source: "PHB",
         ruleset: "2014",
-        facets: { rarity: "common", reqAttune: false },
-        kind: "item"
+        facets: { rarity: "common", reqAttune: false, type: "wondrous item" },
+        kind: "item",
       },
       // Uncommon items
       {
@@ -54,8 +53,8 @@ describe("magic-items", () => {
         slug: "bag-of-holding",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "uncommon", reqAttune: false },
-        kind: "item"
+        facets: { rarity: "uncommon", reqAttune: false, type: "wondrous item" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/DMG/potion-of-giant-strength",
@@ -63,8 +62,8 @@ describe("magic-items", () => {
         slug: "potion-of-giant-strength",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "uncommon", reqAttune: false },
-        kind: "item"
+        facets: { rarity: "uncommon", reqAttune: false, type: "potion" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/PHB/cloak-of-protection",
@@ -72,8 +71,8 @@ describe("magic-items", () => {
         slug: "cloak-of-protection",
         source: "PHB",
         ruleset: "2014",
-        facets: { rarity: "uncommon", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "uncommon", reqAttune: true, type: "wondrous item" },
+        kind: "item",
       },
       // Rare items
       {
@@ -82,8 +81,8 @@ describe("magic-items", () => {
         slug: "belt-of-giant-strength",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "rare", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "rare", reqAttune: true, type: "wondrous item" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/DMG/sword-of-warning",
@@ -91,8 +90,8 @@ describe("magic-items", () => {
         slug: "sword-of-warning",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "rare", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "rare", reqAttune: true, type: "weapon" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/PHB/ring-of-protection",
@@ -100,8 +99,8 @@ describe("magic-items", () => {
         slug: "ring-of-protection",
         source: "PHB",
         ruleset: "2014",
-        facets: { rarity: "rare", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "rare", reqAttune: true, type: "ring" },
+        kind: "item",
       },
       // Very rare items
       {
@@ -110,8 +109,8 @@ describe("magic-items", () => {
         slug: "helm-of-brilliance",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "very rare", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "very rare", reqAttune: true, type: "wondrous item" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/DMG/sword-of-sharpness",
@@ -119,8 +118,8 @@ describe("magic-items", () => {
         slug: "sword-of-sharpness",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "very rare", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "very rare", reqAttune: true, type: "weapon" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/PHB/staff-of-power",
@@ -128,8 +127,8 @@ describe("magic-items", () => {
         slug: "staff-of-power",
         source: "PHB",
         ruleset: "2014",
-        facets: { rarity: "very rare", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "very rare", reqAttune: true, type: "staff" },
+        kind: "item",
       },
       // Legendary items
       {
@@ -138,8 +137,8 @@ describe("magic-items", () => {
         slug: "longsword-holy-avenger",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "legendary", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "legendary", reqAttune: true, type: "weapon" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/DMG/maze",
@@ -147,8 +146,8 @@ describe("magic-items", () => {
         slug: "cube-of-force",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "legendary", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "legendary", reqAttune: true, type: "wondrous item" },
+        kind: "item",
       },
       {
         uri: "fiveet://entity/item/PHB/rod-of-security",
@@ -156,8 +155,8 @@ describe("magic-items", () => {
         slug: "rod-of-security",
         source: "PHB",
         ruleset: "2014",
-        facets: { rarity: "legendary", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "legendary", reqAttune: true, type: "rod" },
+        kind: "item",
       },
       // Artifact items
       {
@@ -166,8 +165,8 @@ describe("magic-items", () => {
         slug: "ornate-handaxe",
         source: "DMG",
         ruleset: "2014",
-        facets: { rarity: "artifact", reqAttune: true },
-        kind: "item"
+        facets: { rarity: "artifact", reqAttune: true, type: "weapon" },
+        kind: "item",
       },
     ];
 
@@ -180,7 +179,7 @@ describe("magic-items", () => {
       type: "potion",
       rarity: "common",
       reqAttune: false,
-      entries: ["A character who drinks this magical red fluid regains 2d4 + 2 hit points."]
+      entries: ["A character who drinks this magical red fluid regains 2d4 + 2 hit points."],
     });
 
     testIndex.byUri.set("fiveet://entity/item/DMG/bag-of-holding", {
@@ -191,9 +190,11 @@ describe("magic-items", () => {
       entries: [
         {
           type: "entries",
-          entries: ["This bag has an interior space considerably larger than its outside dimensions."]
-        }
-      ]
+          entries: [
+            "This bag has an interior space considerably larger than its outside dimensions.",
+          ],
+        },
+      ],
     });
 
     testIndex.byUri.set("fiveet://entity/item/DMG/belt-of-giant-strength", {
@@ -201,7 +202,7 @@ describe("magic-items", () => {
       type: "wondrous item",
       rarity: "rare",
       reqAttune: true,
-      entries: ["Your Strength score becomes 21 while you wear this belt."]
+      entries: ["Your Strength score becomes 21 while you wear this belt."],
     });
 
     testIndex.byUri.set("fiveet://entity/item/DMG/helm-of-brilliance", {
@@ -209,7 +210,7 @@ describe("magic-items", () => {
       type: "wondrous item",
       rarity: "very rare",
       reqAttune: true,
-      entries: ["This dazzling helm is set with diamonds, rubies, fire opals, and opals."]
+      entries: ["This dazzling helm is set with diamonds, rubies, fire opals, and opals."],
     });
 
     testIndex.byUri.set("fiveet://entity/item/DMG/longsword-holy-avenger", {
@@ -217,7 +218,7 @@ describe("magic-items", () => {
       type: "weapon",
       rarity: "legendary",
       reqAttune: true,
-      entries: ["You gain a +3 bonus to attack and damage rolls made with this magic weapon."]
+      entries: ["You gain a +3 bonus to attack and damage rolls made with this magic weapon."],
     });
   });
 
@@ -285,11 +286,11 @@ describe("magic-items", () => {
     it("suggests items for tier1 (levels 1-4)", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 3,
-        count: 3
+        count: 3,
       });
 
       expect(suggestions.length).toBe(3);
-      suggestions.forEach(item => {
+      suggestions.forEach((item) => {
         expect(["common", "uncommon"]).toContain(item.rarity);
       });
     });
@@ -297,11 +298,11 @@ describe("magic-items", () => {
     it("suggests items for tier2 (levels 5-10)", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 7,
-        count: 3
+        count: 3,
       });
 
       expect(suggestions.length).toBe(3);
-      suggestions.forEach(item => {
+      suggestions.forEach((item) => {
         expect(["uncommon", "rare"]).toContain(item.rarity);
       });
     });
@@ -309,11 +310,11 @@ describe("magic-items", () => {
     it("suggests items for tier3 (levels 11-16)", () => {
       const suggestions = suggestMagicItems(testIndex, {
         tier: "tier3",
-        count: 3
+        count: 3,
       });
 
       expect(suggestions.length).toBe(3);
-      suggestions.forEach(item => {
+      suggestions.forEach((item) => {
         expect(["rare", "very rare"]).toContain(item.rarity);
       });
     });
@@ -321,11 +322,11 @@ describe("magic-items", () => {
     it("suggests items for tier4 (levels 17-20)", () => {
       const suggestions = suggestMagicItems(testIndex, {
         tier: "tier4",
-        count: 3
+        count: 3,
       });
 
       expect(suggestions.length).toBe(3);
-      suggestions.forEach(item => {
+      suggestions.forEach((item) => {
         expect(["very rare", "legendary"]).toContain(item.rarity);
       });
     });
@@ -334,11 +335,11 @@ describe("magic-items", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 10,
         rarity: "rare",
-        count: 2
+        count: 2,
       });
 
       expect(suggestions.length).toBe(2);
-      suggestions.forEach(item => {
+      suggestions.forEach((item) => {
         expect(item.rarity).toBe("rare");
       });
     });
@@ -347,11 +348,11 @@ describe("magic-items", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 3,
         item_type: "potion",
-        count: 1
+        count: 1,
       });
 
       expect(suggestions.length).toBeGreaterThan(0);
-      suggestions.forEach(item => {
+      suggestions.forEach((item) => {
         expect(item.type.toLowerCase()).toContain("potion");
       });
     });
@@ -360,11 +361,11 @@ describe("magic-items", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 3,
         source: "PHB",
-        count: 2
+        count: 2,
       });
 
       expect(suggestions.length).toBeGreaterThan(0);
-      suggestions.forEach(item => {
+      suggestions.forEach((item) => {
         expect(item.source).toBe("PHB");
       });
     });
@@ -375,7 +376,7 @@ describe("magic-items", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 3,
         ruleset: "2014",
-        count: 2
+        count: 2,
       });
 
       expect(suggestions.length).toBeGreaterThan(0);
@@ -385,7 +386,7 @@ describe("magic-items", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 1,
         rarity: "artifact",
-        count: 5
+        count: 5,
       });
 
       // Should return some items (we have artifacts in test data)
@@ -396,7 +397,7 @@ describe("magic-items", () => {
       const count = 5;
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 5,
-        count
+        count,
       });
 
       expect(suggestions.length).toBe(count);
@@ -405,7 +406,7 @@ describe("magic-items", () => {
     it("includes item details in suggestions", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 1,
-        count: 1
+        count: 1,
       });
 
       expect(suggestions.length).toBeGreaterThan(0);
@@ -427,7 +428,7 @@ describe("magic-items", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 1,
         rarity: "common",
-        count: 1
+        count: 1,
       });
 
       expect(suggestions.length).toBeGreaterThan(0);
@@ -442,22 +443,22 @@ describe("magic-items", () => {
     it("uses tier parameter when party_level is not provided", () => {
       const suggestions = suggestMagicItems(testIndex, {
         tier: "tier1",
-        count: 2
+        count: 2,
       });
 
       expect(suggestions.length).toBe(2);
-      suggestions.forEach(item => {
+      suggestions.forEach((item) => {
         expect(["common", "uncommon"]).toContain(item.rarity);
       });
     });
 
     it("defaults to tier2 when neither party_level nor tier is specified", () => {
       const suggestions = suggestMagicItems(testIndex, {
-        count: 2
+        count: 2,
       });
 
       expect(suggestions.length).toBe(2);
-      suggestions.forEach(item => {
+      suggestions.forEach((item) => {
         expect(["uncommon", "rare"]).toContain(item.rarity);
       });
     });
@@ -465,7 +466,7 @@ describe("magic-items", () => {
     it("honors max count limit", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 5,
-        count: 6
+        count: 6,
       });
 
       // Tier2 (uncommon/rare) should have at least 6 items in our test data
@@ -476,10 +477,10 @@ describe("magic-items", () => {
     it("returns unique items (no duplicates)", () => {
       const suggestions = suggestMagicItems(testIndex, {
         party_level: 5,
-        count: 5
+        count: 5,
       });
 
-      const uris = suggestions.map(s => s.uri);
+      const uris = suggestions.map((s) => s.uri);
       const uniqueUris = new Set(uris);
 
       expect(uris.length).toBe(uniqueUris.size);

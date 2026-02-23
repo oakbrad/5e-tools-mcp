@@ -48,9 +48,40 @@ export interface ScaleEncounterResult {
 
 /** Available CR values sorted by XP */
 const SORTED_CRS = [
-  "0", "1/8", "1/4", "1/2", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-  "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
-  "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"
+  "0",
+  "1/8",
+  "1/4",
+  "1/2",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "23",
+  "24",
+  "25",
+  "26",
+  "27",
+  "28",
+  "29",
+  "30",
 ];
 
 /**
@@ -85,7 +116,7 @@ function calculateTargetXP(
   evaluation: EncounterEvaluation,
   targetParty: number[],
   targetDifficulty?: "easy" | "medium" | "hard" | "deadly",
-  adjustment?: "easier" | "harder"
+  adjustment?: "easier" | "harder",
 ): { targetXP: number; difficulty: Difficulty } {
   const partyThresholds = calculatePartyThresholds(targetParty);
   const currentXP = evaluation.adjustedXP;
@@ -100,7 +131,8 @@ function calculateTargetXP(
     };
     return {
       targetXP: Math.round(difficultyMap[targetDifficulty]),
-      difficulty: targetDifficulty.charAt(0).toUpperCase() + targetDifficulty.slice(1) as Difficulty,
+      difficulty: (targetDifficulty.charAt(0).toUpperCase() +
+        targetDifficulty.slice(1)) as Difficulty,
     };
   }
 
@@ -112,7 +144,7 @@ function calculateTargetXP(
       partyThresholds.hard,
       partyThresholds.deadly,
     ];
-    const newThreshold = thresholds.find(t => t < currentXP);
+    const newThreshold = thresholds.find((t) => t < currentXP);
     if (newThreshold) {
       // Target midpoint between new threshold and current
       return {
@@ -135,7 +167,7 @@ function calculateTargetXP(
       partyThresholds.hard,
       partyThresholds.deadly,
     ];
-    const newThreshold = [...thresholds].reverse().find(t => t > currentXP);
+    const newThreshold = [...thresholds].reverse().find((t) => t > currentXP);
     if (newThreshold) {
       // Target midpoint between current and new threshold
       return {
@@ -164,8 +196,8 @@ function scaleByCount(
   monsters: MonsterEntry[],
   targetBaseXP: number,
   currentBaseXP: number,
-  multiplier: number,
-  minCountPerMonster: number = 1
+  _multiplier: number,
+  minCountPerMonster: number = 1,
 ): Array<{ cr: string; count: number; xp: number }> {
   const scaleFactor = targetBaseXP / currentBaseXP;
   const scaledMonsters: Array<{ cr: string; count: number; xp: number }> = [];
@@ -188,7 +220,7 @@ function scaleByCR(
   monsters: MonsterEntry[],
   targetBaseXP: number,
   currentBaseXP: number,
-  multiplier: number
+  _multiplier: number,
 ): { monsters: Array<{ cr: string; count: number; xp: number }>; rationale: string[] } {
   const scaleFactor = targetBaseXP / currentBaseXP;
   const scaledMonsters: Array<{ cr: string; count: number; xp: number }> = [];
@@ -200,7 +232,7 @@ function scaleByCR(
 
   for (const monster of monsters) {
     const cr = normalizeCR(monster.cr);
-    const xp = getXPForCR(cr);
+    const _xp = getXPForCR(cr);
     const count = monster.count ?? 1;
     const originalCR = cr;
 
@@ -212,11 +244,15 @@ function scaleByCR(
       const higherCR = getNextHigherCR(cr, steps);
       if (higherCR) {
         newCR = higherCR;
-        rationale.push(`Swapped CR ${originalCR} → CR ${newCR} for ${count} monster${count > 1 ? 's' : ''}`);
+        rationale.push(
+          `Swapped CR ${originalCR} → CR ${newCR} for ${count} monster${count > 1 ? "s" : ""}`,
+        );
       } else if (getNextHigherCR(cr, 1)) {
         // Can't jump full steps, step up one at a time
         newCR = getNextHigherCR(cr, 1)!;
-        rationale.push(`Partially upgraded CR ${originalCR} → CR ${newCR} for ${count} monster${count > 1 ? 's' : ''}`);
+        rationale.push(
+          `Partially upgraded CR ${originalCR} → CR ${newCR} for ${count} monster${count > 1 ? "s" : ""}`,
+        );
       } else {
         // Already at max CR, increase count instead
         adjustedCount = Math.round(count * 1.5);
@@ -227,11 +263,15 @@ function scaleByCR(
       const lowerCR = getNextLowerCR(cr, steps);
       if (lowerCR) {
         newCR = lowerCR;
-        rationale.push(`Downgraded CR ${originalCR} → CR ${newCR} for ${count} monster${count > 1 ? 's' : ''}`);
+        rationale.push(
+          `Downgraded CR ${originalCR} → CR ${newCR} for ${count} monster${count > 1 ? "s" : ""}`,
+        );
       } else if (getNextLowerCR(cr, 1)) {
         // Can't jump full steps, step down one at a time
         newCR = getNextLowerCR(cr, 1)!;
-        rationale.push(`Partially downgraded CR ${originalCR} → CR ${newCR} for ${count} monster${count > 1 ? 's' : ''}`);
+        rationale.push(
+          `Partially downgraded CR ${originalCR} → CR ${newCR} for ${count} monster${count > 1 ? "s" : ""}`,
+        );
       } else {
         // Already at min CR (0), decrease count instead
         adjustedCount = Math.max(1, Math.round(count * 0.67));
@@ -252,7 +292,7 @@ function scaleByMixed(
   monsters: MonsterEntry[],
   targetBaseXP: number,
   currentBaseXP: number,
-  multiplier: number
+  _multiplier: number,
 ): { monsters: Array<{ cr: string; count: number; xp: number }>; rationale: string[] } {
   const scaleFactor = targetBaseXP / currentBaseXP;
   const scalingUp = scaleFactor > 1;
@@ -265,7 +305,7 @@ function scaleByMixed(
 
   for (const monster of monsters) {
     const cr = normalizeCR(monster.cr);
-    const xp = getXPForCR(cr);
+    const _xp = getXPForCR(cr);
     const originalCount = monster.count ?? 1;
     const originalCR = cr;
 
@@ -278,13 +318,17 @@ function scaleByMixed(
       const higherCR = getNextHigherCR(cr, crSteps);
       if (higherCR) {
         newCR = higherCR;
-        rationale.push(`Adjusted CR ${originalCR} → CR ${newCR} and count ${originalCount} → ${scaledCount}`);
+        rationale.push(
+          `Adjusted CR ${originalCR} → CR ${newCR} and count ${originalCount} → ${scaledCount}`,
+        );
       }
     } else if (!scalingUp && crSteps > 0) {
       const lowerCR = getNextLowerCR(cr, crSteps);
       if (lowerCR) {
         newCR = lowerCR;
-        rationale.push(`Adjusted CR ${originalCR} → CR ${newCR} and count ${originalCount} → ${scaledCount}`);
+        rationale.push(
+          `Adjusted CR ${originalCR} → CR ${newCR} and count ${originalCount} → ${scaledCount}`,
+        );
       }
     } else {
       rationale.push(`Scaled count from ${originalCount} → ${scaledCount} (CR unchanged)`);
@@ -304,12 +348,22 @@ function findBestScaling(
   targetBaseXP: number,
   currentBaseXP: number,
   multiplier: number,
-  targetParty: number[]
-): { result: Array<{ cr: string; count: number; xp: number }>; strategy: string; rationale: string[] } {
+  targetParty: number[],
+): {
+  result: Array<{ cr: string; count: number; xp: number }>;
+  strategy: string;
+  rationale: string[];
+} {
   const strategies = [
-    { name: "count_scaling", fn: () => scaleByCount(monsters, targetBaseXP, currentBaseXP, multiplier) },
+    {
+      name: "count_scaling",
+      fn: () => scaleByCount(monsters, targetBaseXP, currentBaseXP, multiplier),
+    },
     { name: "cr_swapping", fn: () => scaleByCR(monsters, targetBaseXP, currentBaseXP, multiplier) },
-    { name: "mixed_scaling", fn: () => scaleByMixed(monsters, targetBaseXP, currentBaseXP, multiplier) },
+    {
+      name: "mixed_scaling",
+      fn: () => scaleByMixed(monsters, targetBaseXP, currentBaseXP, multiplier),
+    },
   ];
 
   let bestResult: Array<{ cr: string; count: number; xp: number }> | null = null;
@@ -377,22 +431,26 @@ export function scaleEncounter(input: ScaleEncounterInput): ScaleEncounterResult
     originalEvaluation,
     target_party,
     target_difficulty,
-    adjustment
+    adjustment,
   );
 
   // Calculate target base XP (before multiplier)
-  const targetPartyThresholds = calculatePartyThresholds(target_party);
+  const _targetPartyThresholds = calculatePartyThresholds(target_party);
   const totalMonsters = current_encounter.reduce((sum, m) => sum + (m.count ?? 1), 0);
   const newMultiplier = getEncounterMultiplier(totalMonsters, target_party.length);
   const targetBaseXP = Math.round(targetXP / newMultiplier);
 
   // Find best scaling approach
-  const { result: scaledMonsters, strategy, rationale } = findBestScaling(
+  const {
+    result: scaledMonsters,
+    strategy,
+    rationale,
+  } = findBestScaling(
     current_encounter,
     targetBaseXP,
     originalEvaluation.totalBaseXP,
     newMultiplier,
-    target_party
+    target_party,
   );
 
   // Evaluate scaled encounter
@@ -401,16 +459,22 @@ export function scaleEncounter(input: ScaleEncounterInput): ScaleEncounterResult
   // Build comprehensive rationale
   const fullRationale: string[] = [];
   if (target_party.length !== current_party.length) {
-    fullRationale.push(`Party size changed from ${current_party.length} to ${target_party.length} PCs`);
+    fullRationale.push(
+      `Party size changed from ${current_party.length} to ${target_party.length} PCs`,
+    );
   }
   if (target_difficulty) {
     fullRationale.push(`Target difficulty: ${target_difficulty.toUpperCase()}`);
   } else if (adjustment) {
     fullRationale.push(`Adjustment: ${adjustment}`);
   }
-  fullRationale.push(`Original difficulty: ${originalEvaluation.difficulty} (${originalEvaluation.adjustedXP} XP)`);
+  fullRationale.push(
+    `Original difficulty: ${originalEvaluation.difficulty} (${originalEvaluation.adjustedXP} XP)`,
+  );
   fullRationale.push(`Target difficulty: ${difficulty} (${targetXP} XP)`);
-  fullRationale.push(`Actual scaled difficulty: ${scaledEvaluation.difficulty} (${scaledEvaluation.adjustedXP} XP)`);
+  fullRationale.push(
+    `Actual scaled difficulty: ${scaledEvaluation.difficulty} (${scaledEvaluation.adjustedXP} XP)`,
+  );
   fullRationale.push(`Strategy used: ${strategy.replace("_", " ")}`);
   fullRationale.push(...rationale);
 

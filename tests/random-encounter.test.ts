@@ -1,6 +1,6 @@
 // tests/random-encounter.test.ts
 import { describe, test, expect, beforeEach } from "vitest";
-import { generateRandomEncounter, type Environment, type Difficulty } from "../src/random-encounter";
+import { generateRandomEncounter, type Environment } from "../src/random-encounter";
 import type { SearchIndex } from "../src/search";
 
 // Mock search index with sample monsters
@@ -525,7 +525,7 @@ function createMockSearchIndex(): SearchIndex {
     byKind: new Map([
       [
         "monster",
-        monsters.map((m, i) => ({
+        monsters.map((m, _i) => ({
           uri: `fiveet://entity/monster/MM/${m.slug || m.name.toLowerCase().replace(/\s+/g, "-")}`,
           name: m.name,
           slug: m.slug || m.name.toLowerCase().replace(/\s+/g, "-"),
@@ -538,6 +538,7 @@ function createMockSearchIndex(): SearchIndex {
     ]),
     byUri: new Map(),
     sourcesMeta: new Map(),
+    fluffByKey: new Map(),
   };
 }
 
@@ -636,13 +637,10 @@ describe("Random Encounter Generator", () => {
       const party = [5, 5, 5, 5];
       const encounter = generateRandomEncounter(party, "forest", "medium", mockIndex);
 
-      const calculatedBaseXP = encounter.monsters.reduce(
-        (sum, m) => sum + m.xp * m.count,
-        0
-      );
+      const calculatedBaseXP = encounter.monsters.reduce((sum, m) => sum + m.xp * m.count, 0);
       expect(encounter.totalBaseXP).toBe(calculatedBaseXP);
       expect(encounter.adjustedXP).toBe(
-        Math.round(calculatedBaseXP * encounter.encounterMultiplier)
+        Math.round(calculatedBaseXP * encounter.encounterMultiplier),
       );
     });
 
@@ -671,15 +669,9 @@ describe("Random Encounter Generator", () => {
 
       expect(encounter.partyThresholds).toBeDefined();
       expect(encounter.partyThresholds.easy).toBeGreaterThan(0);
-      expect(encounter.partyThresholds.medium).toBeGreaterThan(
-        encounter.partyThresholds.easy
-      );
-      expect(encounter.partyThresholds.hard).toBeGreaterThan(
-        encounter.partyThresholds.medium
-      );
-      expect(encounter.partyThresholds.deadly).toBeGreaterThan(
-        encounter.partyThresholds.hard
-      );
+      expect(encounter.partyThresholds.medium).toBeGreaterThan(encounter.partyThresholds.easy);
+      expect(encounter.partyThresholds.hard).toBeGreaterThan(encounter.partyThresholds.medium);
+      expect(encounter.partyThresholds.deadly).toBeGreaterThan(encounter.partyThresholds.hard);
     });
 
     test("provides difficulty rating", () => {
@@ -687,9 +679,7 @@ describe("Random Encounter Generator", () => {
       const encounter = generateRandomEncounter(party, "forest", "hard", mockIndex);
 
       expect(encounter.difficultyRating).toBeDefined();
-      expect(
-        ["Trivial", "Easy", "Medium", "Hard", "Deadly"]
-      ).toContain(encounter.difficultyRating);
+      expect(["Trivial", "Easy", "Medium", "Hard", "Deadly"]).toContain(encounter.difficultyRating);
     });
 
     test("monster counts are positive integers", () => {
@@ -773,7 +763,7 @@ describe("Random Encounter Generator", () => {
       const party = [5, 5, 5, 5];
       const encounter = generateRandomEncounter(party, "forest", "medium", mockIndex);
 
-      const totalMonsters = encounter.monsters.reduce((sum, m) => sum + m.count, 0);
+      const _totalMonsters = encounter.monsters.reduce((sum, m) => sum + m.count, 0);
       expect(encounter.encounterMultiplier).toBeGreaterThan(0);
       expect(encounter.encounterMultiplier).toBeLessThanOrEqual(4);
     });
