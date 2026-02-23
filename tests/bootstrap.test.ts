@@ -46,7 +46,7 @@ describe("bootstrapData — homebrew directory creation", () => {
     cleanTmpDir(tmpDir);
     vi.restoreAllMocks();
     // Clean env vars
-    delete process.env["5E_MIRROR_REPO"];
+    delete process.env["FIVETOOLS_MIRROR_REPO"];
     delete process.env["HOMEBREW_REPO"];
   });
 
@@ -102,7 +102,7 @@ describe("bootstrapData — homebrew directory creation", () => {
     const dataDir = path.join(tmpDir, "nonexistent");
 
     // Point to a URL that will definitely fail fast
-    process.env["5E_MIRROR_REPO"] = "https://localhost:1/nonexistent-repo.git";
+    process.env["FIVETOOLS_MIRROR_REPO"] = "https://localhost:1/nonexistent-repo.git";
 
     await expect(bootstrapData(dataDir)).rejects.toThrow();
   });
@@ -112,7 +112,7 @@ describe("bootstrapData — homebrew directory creation", () => {
     fs.mkdirSync(dataDir);
 
     // Point to a URL that will definitely fail fast
-    process.env["5E_MIRROR_REPO"] = "https://localhost:1/nonexistent-repo.git";
+    process.env["FIVETOOLS_MIRROR_REPO"] = "https://localhost:1/nonexistent-repo.git";
 
     await expect(bootstrapData(dataDir)).rejects.toThrow();
   });

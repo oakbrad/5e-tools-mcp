@@ -1,7 +1,7 @@
 // src/bootstrap.ts
 // Auto-bootstrap 5etools data and homebrew directories on first run.
 // Tries git clone first; falls back to downloading a tarball if git isn't installed.
-// Controlled by env vars: FIVETOOLS_SRC_DIR, 5E_MIRROR_REPO, HOMEBREW_REPO.
+// Controlled by env vars: FIVETOOLS_SRC_DIR, FIVETOOLS_MIRROR_REPO, HOMEBREW_REPO.
 
 import { execSync } from "node:child_process";
 import fs from "node:fs";
@@ -110,14 +110,14 @@ function readableStreamToNodeReadable(webStream: ReadableStream<Uint8Array>): Re
  * Bootstrap data and homebrew directories if they don't exist.
  * Called once at server startup before data loading.
  *
- * - If dataDir is missing/empty, clones from 5E_MIRROR_REPO (or default mirror)
+ * - If dataDir is missing/empty, clones from FIVETOOLS_MIRROR_REPO (or default mirror)
  * - If homebrew dir is missing and HOMEBREW_REPO is set, clones it
  * - If homebrew dir is missing and no HOMEBREW_REPO, creates empty dir with index.json
  */
 export async function bootstrapData(dataDir: string): Promise<void> {
   // Bootstrap main data directory
   if (!dirExistsAndNonEmpty(dataDir)) {
-    const repo = process.env["5E_MIRROR_REPO"] ?? DEFAULT_MIRROR;
+    const repo = process.env["FIVETOOLS_MIRROR_REPO"] ?? DEFAULT_MIRROR;
     try {
       await cloneOrDownload(repo, dataDir);
       console.error(`[5etools] Bootstrapped data from ${repo}`);

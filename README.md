@@ -55,7 +55,7 @@ The Docker image runs in HTTP mode on port 3524. Data is stored in a named volum
 | ------------------ | ---------------------------------------------------- | ------------------------------------------ |
 | `FIVETOOLS_SRC_DIR`| `./5etools-src`                                      | Path to the 5eTools data directory         |
 | `MCP_HTTP_PORT`    | *(unset — stdio mode)*                               | Set to enable HTTP transport on this port  |
-| `5E_MIRROR_REPO`   | `https://github.com/5etools-mirror-3/5etools-src`    | Git repo URL for auto-bootstrap            |
+| `FIVETOOLS_MIRROR_REPO` | `https://github.com/5etools-mirror-3/5etools-src` | Git repo URL for auto-bootstrap            |
 | `HOMEBREW_REPO`    | *(unset — empty homebrew dir)*                       | Git repo URL for homebrew auto-bootstrap   |
 
 ### Homebrew
