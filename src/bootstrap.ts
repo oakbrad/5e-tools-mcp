@@ -131,10 +131,13 @@ export async function bootstrapData(dataDir: string): Promise<void> {
   }
 
   // Bootstrap homebrew directory
+  // The mirror ships an empty homebrew/ with a blank index.json.
+  // If HOMEBREW_REPO is set, always replace it with the user's repo.
   const homebrewDir = path.join(dataDir, "homebrew");
   const homebrewRepo = process.env["HOMEBREW_REPO"];
 
-  if (homebrewRepo && !dirExistsAndNonEmpty(homebrewDir)) {
+  if (homebrewRepo) {
+    fs.rmSync(homebrewDir, { recursive: true, force: true });
     try {
       await cloneOrDownload(homebrewRepo, homebrewDir);
       console.error(`[5etools] Bootstrapped homebrew from ${homebrewRepo}`);
