@@ -118,7 +118,9 @@ export async function bootstrapData(dataDir: string): Promise<void> {
   // Bootstrap main data directory
   if (!dirExistsAndNonEmpty(dataDir)) {
     const repo = process.env["FIVETOOLS_MIRROR_REPO"] ?? DEFAULT_MIRROR;
-    console.error(`[5etools] First run — downloading 5etools data (this may take a few minutes)...`);
+    console.error(
+      `[5etools] First run — downloading 5etools data (this may take a few minutes)...`,
+    );
     console.error(`[5etools] Source: ${repo}`);
     const start = Date.now();
     try {

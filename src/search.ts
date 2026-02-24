@@ -220,7 +220,9 @@ export function searchMonsters(idx: SearchIndex, params: SearchMonstersParams): 
 
     if (type) {
       const raw = r.facets.type;
-      const monsterType = (typeof raw === "object" && raw !== null ? (raw as any).type ?? "" : raw ?? "")
+      const monsterType = (
+        typeof raw === "object" && raw !== null ? ((raw as any).type ?? "") : (raw ?? "")
+      )
         .toString()
         .toLowerCase();
       if (!monsterType.includes(type.toLowerCase())) return false;
@@ -275,7 +277,9 @@ export function searchItems(idx: SearchIndex, params: SearchItemsParams): Record
 
     if (type) {
       const raw = r.facets.type;
-      const itemType = (typeof raw === "object" && raw !== null ? (raw as any).type ?? "" : raw ?? "")
+      const itemType = (
+        typeof raw === "object" && raw !== null ? ((raw as any).type ?? "") : (raw ?? "")
+      )
         .toString()
         .toLowerCase();
       if (!itemType.includes(type.toLowerCase())) return false;
