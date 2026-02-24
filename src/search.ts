@@ -219,7 +219,10 @@ export function searchMonsters(idx: SearchIndex, params: SearchMonstersParams): 
     }
 
     if (type) {
-      const monsterType = (r.facets.type || "").toLowerCase();
+      const raw = r.facets.type;
+      const monsterType = (typeof raw === "object" && raw !== null ? (raw as any).type ?? "" : raw ?? "")
+        .toString()
+        .toLowerCase();
       if (!monsterType.includes(type.toLowerCase())) return false;
     }
 
@@ -271,7 +274,10 @@ export function searchItems(idx: SearchIndex, params: SearchItemsParams): Record
     if (attunement !== undefined && r.facets.reqAttune !== attunement) return false;
 
     if (type) {
-      const itemType = (r.facets.type || "").toLowerCase();
+      const raw = r.facets.type;
+      const itemType = (typeof raw === "object" && raw !== null ? (raw as any).type ?? "" : raw ?? "")
+        .toString()
+        .toLowerCase();
       if (!itemType.includes(type.toLowerCase())) return false;
     }
 
