@@ -48,7 +48,7 @@ function dirExistsAndNonEmpty(dir: string): boolean {
 export async function cloneOrDownload(repoUrl: string, targetDir: string): Promise<void> {
   if (hasGit()) {
     console.error(`[5etools] Cloning ${repoUrl} → ${targetDir} ...`);
-    execSync(`git clone --depth 1 ${repoUrl} ${targetDir}`, {
+    execSync(`git clone --depth 1 --progress ${repoUrl} ${targetDir}`, {
       stdio: ["ignore", "inherit", "inherit"],
     });
     return;
@@ -118,9 +118,13 @@ export async function bootstrapData(dataDir: string): Promise<void> {
   // Bootstrap main data directory
   if (!dirExistsAndNonEmpty(dataDir)) {
     const repo = process.env["FIVETOOLS_MIRROR_REPO"] ?? DEFAULT_MIRROR;
+    console.error(`[5etools] First run — downloading 5etools data (this may take a few minutes)...`);
+    console.error(`[5etools] Source: ${repo}`);
+    const start = Date.now();
     try {
       await cloneOrDownload(repo, dataDir);
-      console.error(`[5etools] Bootstrapped data from ${repo}`);
+      const secs = ((Date.now() - start) / 1000).toFixed(1);
+      console.error(`[5etools] Data download complete (${secs}s)`);
     } catch (err) {
       console.error(
         `[5etools] Failed to bootstrap data: ${err instanceof Error ? err.message : String(err)}`,
@@ -128,6 +132,8 @@ export async function bootstrapData(dataDir: string): Promise<void> {
       console.error(`[5etools] Please install git or manually download 5etools-src to ${dataDir}`);
       throw err;
     }
+  } else {
+    console.error(`[5etools] Using existing data at ${dataDir}`);
   }
 
   // Bootstrap homebrew directory
@@ -137,10 +143,11 @@ export async function bootstrapData(dataDir: string): Promise<void> {
   const homebrewRepo = process.env["HOMEBREW_REPO"];
 
   if (homebrewRepo) {
+    console.error(`[5etools] Downloading homebrew from ${homebrewRepo} ...`);
     fs.rmSync(homebrewDir, { recursive: true, force: true });
     try {
       await cloneOrDownload(homebrewRepo, homebrewDir);
-      console.error(`[5etools] Bootstrapped homebrew from ${homebrewRepo}`);
+      console.error(`[5etools] Homebrew ready`);
     } catch (err) {
       console.error(
         `[5etools] Failed to bootstrap homebrew: ${err instanceof Error ? err.message : String(err)}`,
@@ -153,6 +160,5 @@ export async function bootstrapData(dataDir: string): Promise<void> {
   } else if (!dirExistsAndNonEmpty(homebrewDir)) {
     fs.mkdirSync(homebrewDir, { recursive: true });
     fs.writeFileSync(path.join(homebrewDir, "index.json"), '{"toImport": []}');
-    console.error(`[5etools] Created empty homebrew directory`);
   }
 }
