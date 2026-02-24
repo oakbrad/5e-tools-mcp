@@ -202,15 +202,18 @@ const homebrewKinds: Kind[] = [
 
 // ── Shared helpers ────────────────────────────────────────────────
 
-/** Read and parse a JSON file, returning null on any error */
+/** Read and parse a JSON file, returning null on any error.
+ *  Silent on missing files (ENOENT); warns on parse errors or other failures. */
 async function readJsonFile(fullPath: string): Promise<any | null> {
   try {
     const raw = await fs.readFile(fullPath, "utf8");
     return JSON.parse(raw);
-  } catch (err) {
-    console.warn(
-      `[5etools] Skipping ${fullPath}: ${err instanceof Error ? err.message : String(err)}`,
-    );
+  } catch (err: any) {
+    if (err?.code !== "ENOENT") {
+      console.warn(
+        `[5etools] Skipping ${fullPath}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
     return null;
   }
 }
